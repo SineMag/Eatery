@@ -131,7 +131,7 @@ export default function ItemDetailScreen() {
       <View style={styles.content}>
         <Text style={styles.description}>{foodItem.description}</Text>
         <Text style={styles.basePrice}>
-          Base Price: ${foodItem.price.toFixed(2)}
+          Base Price: R{foodItem.price.toFixed(2)}
         </Text>
 
         {/* Quantity */}
@@ -170,7 +170,7 @@ export default function ItemDetailScreen() {
                 <Text style={styles.optionText}>{side.name}</Text>
                 {side.price && (
                   <Text style={styles.optionPrice}>
-                    +${side.price.toFixed(2)}
+                    +R{side.price.toFixed(2)}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -194,7 +194,7 @@ export default function ItemDetailScreen() {
                 <Text style={styles.optionText}>{drink.name}</Text>
                 {drink.price && (
                   <Text style={styles.optionPrice}>
-                    +${drink.price.toFixed(2)}
+                    +R{drink.price.toFixed(2)}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -219,7 +219,7 @@ export default function ItemDetailScreen() {
                 <Text style={styles.optionText}>{extra.name}</Text>
                 {extra.price && (
                   <Text style={styles.optionPrice}>
-                    +${extra.price.toFixed(2)}
+                    +R{extra.price.toFixed(2)}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -254,7 +254,7 @@ export default function ItemDetailScreen() {
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total:</Text>
             <Text style={styles.totalPrice}>
-              ${calculateTotal().toFixed(2)}
+              R{calculateTotal().toFixed(2)}
             </Text>
           </View>
           <TouchableOpacity style={styles.addButton} onPress={handleAddToCart}>

@@ -22,7 +22,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <IconSymbol size={28} name="hand.thumbsup.fill" color={color} />
           ),
         }}
       />
@@ -31,7 +31,11 @@ export default function TabLayout() {
         options={{
           title: "Cart",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="cart.fill" color={color} />
+            <IconSymbol
+              size={28}
+              name="hand.point.up.left.fill"
+              color={color}
+            />
           ),
         }}
       />
@@ -40,7 +44,7 @@ export default function TabLayout() {
         options={{
           title: "Orders",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="list.bullet" color={color} />
+            <IconSymbol size={28} name="list.bullet.rectangle" color={color} />
           ),
         }}
       />
@@ -49,7 +53,11 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
+            <IconSymbol
+              size={28}
+              name="person.crop.circle.fill"
+              color={color}
+            />
           ),
         }}
       />

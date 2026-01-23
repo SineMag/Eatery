@@ -1,7 +1,10 @@
+import { BottomNavigation } from "@/components/bottom-navigation";
+import { Logo } from "@/components/logo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
+import { SFSymbol } from "expo-symbols";
 import React from "react";
 import {
   ScrollView,
@@ -10,58 +13,64 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SFSymbols } from "expo-symbols"; // Added import
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const categories: { id: string; name: string; icon: SFSymbols }[] = [ // Added type annotation
-    { id: "1", name: "Mains", icon: "fork.knife" },
-    { id: "2", name: "Starters", icon: "leaf" },
-    { id: "3", name: "Desserts", icon: "birthday.cake" },
-    { id: "4", name: "Beverages", icon: "cup.and.saucer" },
-    { id: "5", name: "Alcohol", icon: "wineglass" },
-    { id: "6", name: "Burgers", icon: "b.circle" },
+  const categories: { id: string; name: string; icon: SFSymbol }[] = [
+    { id: "1", name: "Mains", icon: "hand.point.up.left.fill" },
+    { id: "2", name: "Starters", icon: "hand.thumbsup.fill" },
+    { id: "3", name: "Desserts", icon: "hand.point.right.fill" },
+    { id: "4", name: "Beverages", icon: "hand.wave.fill" },
+    { id: "5", name: "Alcohol", icon: "hand.raised.fill" },
+    { id: "6", name: "Burgers", icon: "hand.point.up.left" },
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Eatery</Text>
-        {user ? (
-          <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
-            <IconSymbol
-              name="person.fill"
-              size={24}
-              color={Colors.light.text}
-            />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={() => router.push("/auth/login")}>
-            <IconSymbol name="person" size={24} color={Colors.light.text} />
-          </TouchableOpacity>
-        )}
-      </View>
+    <View style={styles.container}>
+      <ScrollView style={styles.content}>
+        <View style={styles.header}>
+          <Logo size="large" />
+          {user ? (
+            <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
+              <IconSymbol
+                name="hand.thumbsup.fill"
+                size={24}
+                color={Colors.light.text}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => router.push("/auth/login")}>
+              <IconSymbol
+                name="hand.point.up.left"
+                size={24}
+                color={Colors.light.text}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
 
-      <Text style={styles.sectionTitle}>Categories</Text>
-      <View style={styles.categoryGrid}>
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category.id}
-            style={styles.categoryCard}
-            onPress={() => router.push(`/menu/${category.id}`)}
-          >
-            <IconSymbol
-              name={category.icon}
-              size={32}
-              color={Colors.light.text}
-            />
-            <Text style={styles.categoryName}>{category.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+        <Text style={styles.sectionTitle}>Categories</Text>
+        <View style={styles.categoryGrid}>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.id}
+              style={styles.categoryCard}
+              onPress={() => router.push(`/menu/${category.id}`)}
+            >
+              <IconSymbol
+                name={category.icon}
+                size={32}
+                color={Colors.light.text}
+              />
+              <Text style={styles.categoryName}>{category.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+      <BottomNavigation activeTab="home" />
+    </View>
   );
 }
 
@@ -69,6 +78,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  content: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
