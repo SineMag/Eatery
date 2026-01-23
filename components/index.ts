@@ -5,6 +5,7 @@ export { HapticTab } from "./haptic-tab";
 export { HelloWave } from "./hello-wave";
 export { Logo } from "./logo";
 export { ParallaxScrollView } from "./parallax-scroll-view";
+export { SearchBar } from "./search-bar";
 export { Snackbar } from "./snackbar";
 export { ThemedText } from "./themed-text";
 export { ThemedView } from "./themed-view";

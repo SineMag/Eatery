@@ -44,6 +44,7 @@ export interface User {
   surname: string;
   contactNumber: string;
   address: string;
+  profileImage?: string;
   cardDetails?: CardDetails;
 }
 

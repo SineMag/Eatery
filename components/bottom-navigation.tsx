@@ -56,7 +56,12 @@ export function BottomNavigation({ activeTab }: BottomNavProps) {
   ];
 
   const handlePress = (item: (typeof navItems)[0]) => {
-    router.push(item.route as any);
+    if (item.id === "home") {
+      // Use replace for home to avoid stacking navigation history
+      router.replace(item.route as any);
+    } else {
+      router.push(item.route as any);
+    }
   };
 
   return (

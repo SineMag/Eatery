@@ -1,15 +1,24 @@
 import { AppHeader } from "@/components/app-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { SearchBar } from "@/components/search-bar";
 import { Snackbar } from "@/components/snackbar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
+import { searchRestaurantsByLocation } from "@/utils/geocoding";
+import {
+  fetchNearbyRestaurants,
+  formatDistance,
+  getCuisineType,
+  getRestaurantAddress,
+} from "@/utils/openStreetMap";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { SFSymbol } from "expo-symbols";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,6 +36,25 @@ export default function HomeScreen() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [currentSearchQuery, setCurrentSearchQuery] = useState("");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  // Get personalized greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  // Load profile image from storage
+  useEffect(() => {
+    if (user?.profileImage) {
+      setProfileImage(user.profileImage);
+    }
+  }, [user]);
 
   useEffect(() => {
     requestLocationPermission();
@@ -50,7 +78,7 @@ export default function HomeScreen() {
       setLocation(currentLocation);
       setSnackbarMessage("Location found! Showing restaurants near you");
       setShowSnackbar(true);
-      fetchNearbyRestaurants(currentLocation.coords);
+      fetchNearbyRestaurantsData(currentLocation.coords);
     } catch (error) {
       console.error("Error getting location:", error);
       Alert.alert("Error", "Failed to get your location. Please try again.");
@@ -59,46 +87,113 @@ export default function HomeScreen() {
     }
   };
 
-  const fetchNearbyRestaurants = async (coords: Location.LocationCoords) => {
-    // Mock nearby restaurants data
-    const mockRestaurants = [
-      {
-        id: 1,
-        name: "Burger Palace",
-        distance: "0.5 km",
-        rating: 4.5,
-        cuisine: "American",
-      },
-      {
-        id: 2,
-        name: "Pasta Heaven",
-        distance: "0.8 km",
-        rating: 4.7,
-        cuisine: "Italian",
-      },
-      {
-        id: 3,
-        name: "Sushi Express",
-        distance: "1.2 km",
-        rating: 4.8,
-        cuisine: "Japanese",
-      },
-      {
-        id: 4,
-        name: "Taco Fiesta",
-        distance: "1.5 km",
-        rating: 4.3,
-        cuisine: "Mexican",
-      },
-      {
-        id: 5,
-        name: "Curry House",
-        distance: "2.0 km",
-        rating: 4.6,
-        cuisine: "Indian",
-      },
-    ];
-    setNearbyRestaurants(mockRestaurants);
+  const fetchNearbyRestaurantsData = async (
+    coords: Location.LocationCoords,
+  ) => {
+    try {
+      const restaurants = await fetchNearbyRestaurants(
+        coords.latitude,
+        coords.longitude,
+      );
+
+      // Format data for UI
+      const formattedRestaurants = restaurants.map((restaurant: any) => ({
+        id: restaurant.id.toString(),
+        name: restaurant.tags.name,
+        distance: formatDistance(restaurant.distance),
+        rating: 0, // OpenStreetMap doesn't provide ratings
+        cuisine: getCuisineType(restaurant.tags),
+        vicinity: getRestaurantAddress(restaurant.tags),
+        opening_hours: restaurant.tags.opening_hours,
+        phone: restaurant.tags.phone,
+        website: restaurant.tags.website,
+      }));
+
+      setNearbyRestaurants(formattedRestaurants);
+    } catch (error) {
+      console.error("Error fetching nearby restaurants:", error);
+      // Fall back to mock data if API fails
+      const mockRestaurants = [
+        {
+          id: "1",
+          name: "McDonald's",
+          distance: "0.5 km",
+          rating: 0,
+          cuisine: "Fast Food",
+          vicinity: "123 Main St",
+        },
+        {
+          id: "2",
+          name: "KFC",
+          distance: "0.8 km",
+          rating: 0,
+          cuisine: "Fast Food",
+          vicinity: "456 Broad St",
+        },
+      ];
+      setNearbyRestaurants(mockRestaurants);
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    setSearchLoading(true);
+    setCurrentSearchQuery(query);
+
+    try {
+      const restaurants = await searchRestaurantsByLocation(query);
+
+      // Format search results
+      const formattedResults = restaurants.map((restaurant: any) => ({
+        id: restaurant.id.toString(),
+        name: restaurant.tags.name,
+        distance: formatDistance(restaurant.distance),
+        rating: 0,
+        cuisine: getCuisineType(restaurant.tags),
+        vicinity: getRestaurantAddress(restaurant.tags),
+        opening_hours: restaurant.tags.opening_hours,
+        phone: restaurant.tags.phone,
+        website: restaurant.tags.website,
+        searchLocation: restaurant.searchLocation,
+      }));
+
+      setSearchResults(formattedResults);
+      setSnackbarMessage(
+        `Found ${formattedResults.length} restaurants in ${query}`,
+      );
+      setShowSnackbar(true);
+    } catch (error) {
+      console.error("Error searching restaurants:", error);
+      Alert.alert(
+        "Search Error",
+        "Failed to search restaurants. Please try again.",
+      );
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchResults([]);
+    setCurrentSearchQuery("");
+  };
+
+  const getCategoryImage = (categoryName: string) => {
+    switch (categoryName) {
+      case "Mains":
+        return require("../public/Main -Menu.png");
+      case "Starters":
+        return require("../public/Starters - Menu.png");
+      case "Desserts":
+        return require("../public/Dessert - Menu.png");
+      case "Beverages":
+        return require("../public/Beverages - Menu.png");
+      case "Alcohol":
+        return require("../public/Alcohol -Menu.png");
+      case "Burgers":
+        return require("../public/Burger - Menu.png");
+      default:
+        return null;
+    }
   };
 
   const categories: { id: string; name: string; icon: SFSymbol }[] = [
@@ -110,14 +205,162 @@ export default function HomeScreen() {
     { id: "6", name: "Burgers", icon: "hand.point.up.left" },
   ];
 
+  // Get screen dimensions for responsive design
+  const { width: screenWidth } = Dimensions.get("window");
+  const isTablet = screenWidth >= 768;
+  const isDesktop = screenWidth >= 1024;
+
+  // Responsive values
+  const responsive = {
+    containerMaxWidth: isDesktop ? 1200 : isTablet ? 768 : screenWidth,
+    cardWidth: isDesktop ? 240 : isTablet ? 200 : 160,
+    cardHeight: isDesktop ? 280 : isTablet ? 240 : 200,
+    fontSize: {
+      title: isDesktop ? 24 : isTablet ? 22 : 20,
+      section: isDesktop ? 20 : isTablet ? 18 : 16,
+      card: isDesktop ? 17 : isTablet ? 16 : 15,
+      text: isDesktop ? 15 : isTablet ? 14 : 13,
+    },
+    spacing: {
+      large: isDesktop ? 24 : isTablet ? 20 : 16,
+      medium: isDesktop ? 20 : isTablet ? 16 : 12,
+      small: isDesktop ? 16 : isTablet ? 12 : 8,
+    },
+    categoryColumns: isDesktop ? 4 : isTablet ? 3 : 2,
+  };
+
+  // Dynamic styles
+  const dynamicStyles = StyleSheet.create({
+    container: {
+      maxWidth: responsive.containerMaxWidth,
+      alignSelf: "center",
+      width: "100%",
+    },
+    sectionTitle: {
+      fontSize: responsive.fontSize.section,
+      margin: responsive.spacing.large,
+      marginBottom: responsive.spacing.medium,
+    },
+    restaurantCard: {
+      width: responsive.cardWidth,
+      marginRight: responsive.spacing.small,
+    },
+    restaurantImage: {
+      height: responsive.cardHeight * 0.4,
+    },
+    restaurantName: {
+      fontSize: responsive.fontSize.card,
+    },
+    categoryCard: {
+      width: `${100 / responsive.categoryColumns - 2}%`,
+      maxWidth: responsive.cardWidth,
+    },
+    categoryName: {
+      fontSize: responsive.fontSize.text,
+    },
+  });
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, dynamicStyles.container]}>
       <ScrollView style={styles.content}>
-        <AppHeader showProfile={true} showCart={true} showLogo={true} />
+        <AppHeader
+          showProfile={true}
+          showCart={true}
+          showLogo={true}
+          customProfileImage={profileImage}
+        />
+
+        {/* Personalized Welcome Section */}
+        {user && (
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeText}>
+              {getGreeting()}, {user.name}!
+            </Text>
+            <Text style={styles.welcomeSubtext}>
+              What would you like to eat today?
+            </Text>
+          </View>
+        )}
+
+        {/* Search Section */}
+        <View style={styles.searchSection}>
+          <SearchBar
+            onSearch={handleSearch}
+            placeholder="Search restaurants in any city..."
+            loading={searchLoading}
+          />
+        </View>
+
+        {/* Search Results */}
+        {searchResults.length > 0 && (
+          <View style={styles.searchResultsSection}>
+            <View style={styles.searchResultsHeader}>
+              <Text
+                style={[styles.searchResultsTitle, dynamicStyles.sectionTitle]}
+              >
+                Restaurants in {currentSearchQuery}
+              </Text>
+              <TouchableOpacity
+                onPress={clearSearch}
+                style={styles.clearSearchButton}
+              >
+                <IconSymbol name="xmark" size={16} color="#9ca3af" />
+                <Text style={styles.clearSearchText}>Clear</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScroll}
+            >
+              {searchResults.map((restaurant) => (
+                <TouchableOpacity
+                  key={restaurant.id}
+                  style={[styles.restaurantCard, dynamicStyles.restaurantCard]}
+                  onPress={() => router.push(`/menu/${restaurant.id}`)}
+                >
+                  <View
+                    style={[
+                      styles.restaurantImage,
+                      dynamicStyles.restaurantImage,
+                    ]}
+                  >
+                    <IconSymbol name="fork.knife" size={32} color="#fff" />
+                  </View>
+                  <Text
+                    style={[
+                      styles.restaurantName,
+                      dynamicStyles.restaurantName,
+                    ]}
+                  >
+                    {restaurant.name}
+                  </Text>
+                  <Text style={styles.restaurantCuisine}>
+                    {restaurant.cuisine}
+                  </Text>
+                  <View style={styles.restaurantInfo}>
+                    <Text style={styles.restaurantDistance}>
+                      {restaurant.distance}
+                    </Text>
+                    <View style={styles.rating}>
+                      <IconSymbol name="star.fill" size={12} color="#fbbf24" />
+                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.searchLocation} numberOfLines={1}>
+                    📍 {restaurant.searchLocation}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Location Section */}
         <View style={styles.locationSection}>
-          <Text style={styles.sectionTitle}>Nearby Restaurants</Text>
+          <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
+            Nearby Restaurants
+          </Text>
           {loadingLocation ? (
             <View style={styles.loadingContainer}>
               <IconSymbol name="location" size={24} color="#9ca3af" />
@@ -137,7 +380,9 @@ export default function HomeScreen() {
         {/* Nearby Restaurants */}
         {nearbyRestaurants.length > 0 && (
           <View style={styles.nearbySection}>
-            <Text style={styles.sectionTitle}>Recommended Near You</Text>
+            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
+              Recommended Near You
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -146,13 +391,25 @@ export default function HomeScreen() {
               {nearbyRestaurants.map((restaurant) => (
                 <TouchableOpacity
                   key={restaurant.id}
-                  style={styles.restaurantCard}
+                  style={[styles.restaurantCard, dynamicStyles.restaurantCard]}
                   onPress={() => router.push(`/menu/${restaurant.id}`)}
                 >
-                  <View style={styles.restaurantImage}>
+                  <View
+                    style={[
+                      styles.restaurantImage,
+                      dynamicStyles.restaurantImage,
+                    ]}
+                  >
                     <IconSymbol name="fork.knife" size={32} color="#fff" />
                   </View>
-                  <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                  <Text
+                    style={[
+                      styles.restaurantName,
+                      dynamicStyles.restaurantName,
+                    ]}
+                  >
+                    {restaurant.name}
+                  </Text>
                   <Text style={styles.restaurantCuisine}>
                     {restaurant.cuisine}
                   </Text>
@@ -172,20 +429,26 @@ export default function HomeScreen() {
         )}
 
         {/* Categories Section */}
-        <Text style={styles.sectionTitle}>Categories</Text>
+        <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
+          Categories
+        </Text>
         <View style={styles.categoryGrid}>
           {categories.map((category) => (
             <TouchableOpacity
               key={category.id}
-              style={styles.categoryCard}
+              style={[styles.categoryCard, dynamicStyles.categoryCard]}
               onPress={() => router.push(`/menu/${category.id}`)}
             >
-              <IconSymbol
-                name={category.icon}
-                size={32}
-                color={Colors.light.text}
-              />
-              <Text style={styles.categoryName}>{category.name}</Text>
+              <View style={styles.categoryImageContainer}>
+                <Image
+                  source={getCategoryImage(category.name)}
+                  style={styles.categoryImage}
+                  resizeMode="cover"
+                />
+              </View>
+              <Text style={[styles.categoryName, dynamicStyles.categoryName]}>
+                {category.name}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -212,6 +475,22 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingBottom: 80, // Account for bottom navigation
+  },
+  welcomeSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: "#fff",
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#11181C",
+    marginBottom: 4,
+  },
+  welcomeSubtext: {
+    fontSize: 16,
+    color: "#6b7280",
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -311,8 +590,9 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    padding: 8,
     justifyContent: "space-between",
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   categoryCard: {
     width: "48%",
@@ -324,11 +604,57 @@ const styles = StyleSheet.create({
     margin: "1%",
     maxWidth: 180,
   },
+  categoryImageContainer: {
+    width: "100%",
+    height: "70%",
+    borderRadius: 8,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  categoryImage: {
+    width: "100%",
+    height: "100%",
+  },
   categoryName: {
     fontSize: 13,
     fontWeight: "500",
     color: "#11181C",
-    marginTop: 6,
     textAlign: "center",
+  },
+  searchSection: {
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e5e5",
+  },
+  searchResultsSection: {
+    marginBottom: 16,
+  },
+  searchResultsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchResultsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#11181C",
+  },
+  clearSearchButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  clearSearchText: {
+    fontSize: 12,
+    color: "#9ca3af",
+  },
+  searchLocation: {
+    fontSize: 10,
+    color: "#6b7280",
+    marginTop: 4,
+    marginHorizontal: 8,
+    marginBottom: 8,
   },
 });

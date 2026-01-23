@@ -12,6 +12,7 @@ interface AppHeaderProps {
   showProfile?: boolean;
   showLogo?: boolean;
   rightAction?: React.ReactNode;
+  customProfileImage?: string | null;
 }
 
 export function AppHeader({
@@ -20,6 +21,7 @@ export function AppHeader({
   showProfile = true,
   showLogo = true,
   rightAction,
+  customProfileImage,
 }: AppHeaderProps) {
   const { user } = useAuth();
   const router = useRouter();
@@ -33,7 +35,7 @@ export function AppHeader({
               router.push(user ? "/(tabs)/profile" : "/auth/login")
             }
           >
-            <UserAvatar size="medium" />
+            <UserAvatar size="medium" customProfileImage={customProfileImage} />
           </TouchableOpacity>
         )}
         {title && <View style={styles.titleSpacer} />}

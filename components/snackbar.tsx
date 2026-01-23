@@ -47,14 +47,18 @@ export function Snackbar({
   const getBackgroundColor = () => {
     switch (type) {
       case "success":
-        return "#10b981";
+        return "#f3f4f6"; // Light grey
       case "error":
-        return "#ef4444";
+        return "#f3f4f6"; // Light grey
       case "info":
-        return "#3b82f6";
+        return "#f3f4f6"; // Light grey
       default:
-        return "#10b981";
+        return "#f3f4f6"; // Light grey
     }
+  };
+
+  const getTextColor = () => {
+    return "#11181C"; // Dark text for contrast
   };
 
   return (
@@ -67,7 +71,7 @@ export function Snackbar({
         },
       ]}
     >
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.message, { color: getTextColor() }]}>{message}</Text>
     </Animated.View>
   );
 }
@@ -89,12 +93,13 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
   },
   message: {
-    color: "#fff",
     fontSize: 14,
     fontWeight: "500",
   },

@@ -68,6 +68,9 @@
         "messagingSenderId": "306837127782",
         "appId": "1:306837127782:web:57f21d73dc805ef52523a7",
         "measurementId": "G-XXXXXXXXXX"
+      },
+      "googlePlaces": {
+        "apiKey": "YOUR_GOOGLE_PLACES_API_KEY_HERE"
       }
     }
   }

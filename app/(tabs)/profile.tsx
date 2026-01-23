@@ -2,12 +2,12 @@ import { AppHeader } from "@/components/app-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/useAuth";
-import { auth } from "@/utils/firebase";
+import { useImagePicker } from "@/hooks/useImagePicker";
 import { useRouter } from "expo-router";
-import { signOut } from "firebase/auth";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,6 +26,13 @@ export default function ProfileScreen() {
     loading: imageLoading,
   } = useImagePicker();
 
+  // Initialize profile image from user data
+  React.useEffect(() => {
+    if (user?.profileImage && !profileImage) {
+      setProfileImage(user.profileImage);
+    }
+  }, [user, profileImage, setProfileImage]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -36,30 +43,34 @@ export default function ProfileScreen() {
   });
 
   const handleUpdateProfile = async () => {
-    // TODO: Update profile in Firestore including profile image
-    Alert.alert("Success", "Profile updated successfully!");
-    setIsEditing(false);
-  };
-
-  const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await signOut(auth);
-          router.replace("/auth/login");
-        },
-      },
-    ]);
+    try {
+      // TODO: Update profile in Firestore including profile image
+      // For now, just show success message
+      Alert.alert("Success", "Profile updated successfully!");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "Failed to update profile. Please try again.");
+    }
   };
 
   const handleImageUpload = async () => {
-    const selectedImage = await pickImage();
-    if (selectedImage) {
-      // TODO: Upload image to Firebase Storage
-      Alert.alert("Success", "Profile image updated!");
+    try {
+      const selectedImage = await pickImage();
+      if (selectedImage) {
+        setProfileImage(selectedImage);
+        // TODO: Upload image to Firebase Storage
+        // For now, just show success message and update local state
+        Alert.alert("Success", "Profile image updated!");
+
+        // Update user object with new profile image
+        if (user) {
+          user.profileImage = selectedImage;
+        }
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "Failed to upload profile image. Please try again.");
     }
   };
 
@@ -67,9 +78,7 @@ export default function ProfileScreen() {
     return (
       <View style={styles.container}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Profile</Text>
-          </View>
+          <AppHeader showProfile={false} showCart={false} showLogo={false} />
           <View style={styles.notLoggedIn}>
             <IconSymbol name="person.crop.circle" size={48} color="#9ca3af" />
             <Text style={styles.notLoggedInText}>
@@ -91,32 +100,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <AppHeader
-          title="Profile"
-          showProfile={false}
-          showCart={false}
-          showLogo={false}
-          rightAction={
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => setIsEditing(!isEditing)}
-              >
-                <IconSymbol
-                  name={isEditing ? "checkmark" : "pencil"}
-                  size={20}
-                  color="#fff"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.settingsButton}
-                onPress={() => router.push("/(tabs)/settings")}
-              >
-                <IconSymbol name="gearshape" size={20} color="#11181C" />
-              </TouchableOpacity>
-            </View>
-          }
-        />
+        <AppHeader showProfile={false} showCart={false} showLogo={false} />
 
         <View style={styles.profileHeader}>
           <TouchableOpacity
@@ -149,10 +133,37 @@ export default function ProfileScreen() {
               </View>
             )}
           </TouchableOpacity>
+
           <Text style={styles.userName}>
             {formData.name} {formData.surname}
           </Text>
           <Text style={styles.userEmail}>{formData.email}</Text>
+
+          {/* Edit and Settings buttons under profile */}
+          <View style={styles.profileActions}>
+            <TouchableOpacity
+              style={styles.profileEditButton}
+              onPress={() => setIsEditing(!isEditing)}
+            >
+              <IconSymbol
+                name={isEditing ? "checkmark" : "pencil"}
+                size={20}
+                color="#fff"
+              />
+              <Text style={styles.profileButtonText}>
+                {isEditing ? "Save" : "Edit"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.profileSettingsButton}
+              onPress={() => router.push("/(tabs)/settings")}
+            >
+              <IconSymbol name="gearshape" size={20} color="#fff" />
+              <Text style={styles.profileButtonText}>Settings</Text>
+            </TouchableOpacity>
+          </View>
+
           {isEditing && (
             <TouchableOpacity
               style={styles.changePhotoButton}
@@ -281,11 +292,6 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         )}
-
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <IconSymbol name="hand.point.right" size={20} color="#ef4444" />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
       </ScrollView>
       <BottomNavigation activeTab="profile" />
     </View>
@@ -301,34 +307,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingBottom: 80, // Account for bottom navigation
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  headerActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  editButton: {
-    backgroundColor: "#11181C",
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  settingsButton: {
-    backgroundColor: "#f3f4f6",
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -337,6 +315,51 @@ const styles = StyleSheet.create({
   profileHeader: {
     alignItems: "center",
     padding: 24,
+  },
+  profileActions: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 16,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  profileEditButton: {
+    backgroundColor: "#11181C",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  profileSettingsButton: {
+    backgroundColor: "#6b7280",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  profileButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 8,
   },
   avatarContainer: {
     position: "relative",
@@ -534,20 +557,5 @@ const styles = StyleSheet.create({
     color: "#11181C",
     fontSize: 16,
     fontWeight: "600",
-  },
-  signOutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    margin: 16,
-    borderWidth: 1,
-    borderColor: "#ef4444",
-    borderRadius: 8,
-  },
-  signOutText: {
-    fontSize: 16,
-    color: "#ef4444",
-    marginLeft: 8,
   },
 });

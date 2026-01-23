@@ -1,16 +1,18 @@
 import { useAuth } from "@/hooks/useAuth";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { IconSymbol } from "./ui/icon-symbol";
 
 interface UserAvatarProps {
   size?: "small" | "medium" | "large";
   showBorder?: boolean;
+  customProfileImage?: string | null;
 }
 
 export function UserAvatar({
   size = "medium",
   showBorder = true,
+  customProfileImage,
 }: UserAvatarProps) {
   const { user } = useAuth();
 
@@ -31,17 +33,30 @@ export function UserAvatar({
     return showBorder ? 2 : 0;
   };
 
+  const profileImage = customProfileImage || user?.profileImage;
+
   return (
     <View style={[styles.container, { width: getSize(), height: getSize() }]}>
       {user ? (
         <View
           style={[styles.avatarContainer, { borderWidth: getBorderWidth() }]}
         >
-          <IconSymbol
-            name="person.crop.circle.fill"
-            size={getSize() - 8}
-            color="#9ca3af"
-          />
+          {profileImage ? (
+            <Image
+              source={{ uri: profileImage }}
+              style={[
+                styles.avatarImage,
+                { width: getSize() - 4, height: getSize() - 4 },
+              ]}
+              resizeMode="cover"
+            />
+          ) : (
+            <IconSymbol
+              name="person.crop.circle.fill"
+              size={getSize() - 8}
+              color="#9ca3af"
+            />
+          )}
         </View>
       ) : (
         <View
@@ -74,5 +89,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderColor: "#e5e5e5",
     borderWidth: 1,
+    overflow: "hidden",
+  },
+  avatarImage: {
+    borderRadius: 9999,
   },
 });

@@ -1,3 +1,4 @@
+import { AppHeader } from "@/components";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,9 +23,12 @@ export default function SettingsScreen() {
     return (
       <View style={styles.container}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Settings</Text>
-          </View>
+          <AppHeader
+            title="Settings"
+            showProfile={false}
+            showCart={false}
+            showLogo={false}
+          />
           <View style={styles.notLoggedIn}>
             <IconSymbol name="gearshape" size={48} color="#9ca3af" />
             <Text style={styles.notLoggedInText}>
@@ -83,9 +87,12 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Settings</Text>
-        </View>
+        <AppHeader
+          title="Settings"
+          showProfile={false}
+          showCart={false}
+          showLogo={false}
+        />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
