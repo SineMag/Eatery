@@ -276,9 +276,6 @@ export default function HomeScreen() {
             <Text style={styles.welcomeText}>
               {getGreeting()}, {user.name}!
             </Text>
-            <Text style={styles.welcomeSubtext}>
-              What would you like to eat today?
-            </Text>
           </View>
         )}
 
@@ -486,11 +483,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#11181C",
     marginBottom: 4,
-  },
-  welcomeSubtext: {
-    fontSize: 16,
-    color: "#6b7280",
-    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 18,

@@ -3,6 +3,8 @@ import { BottomNavigation } from "@/components/bottom-navigation";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/useAuth";
 import { useImagePicker } from "@/hooks/useImagePicker";
+import { saveProfileImage, updateUserProfile } from "@/utils/firestore";
+import { uploadProfileImage, validateProfileImage } from "@/utils/storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -34,6 +36,7 @@ export default function ProfileScreen() {
   }, [user, profileImage, setProfileImage]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     surname: user?.surname || "",
@@ -41,36 +44,83 @@ export default function ProfileScreen() {
     contactNumber: user?.contactNumber || "",
     address: user?.address || "",
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const handleUpdateProfile = async () => {
+    if (!user) {
+      Alert.alert("Error", "User not authenticated");
+      return;
+    }
+
     try {
-      // TODO: Update profile in Firestore including profile image
-      // For now, just show success message
+      setLoading(true);
+
+      // Update all profile details in Firestore
+      await updateUserProfile(user.uid, {
+        name: formData.name.trim(),
+        surname: formData.surname.trim(),
+        contactNumber: formData.contactNumber.trim(),
+        address: formData.address.trim(),
+        profileImage: profileImage || undefined,
+      });
+
+      // Update local user object to reflect changes immediately
+      if (user) {
+        user.name = formData.name.trim();
+        user.surname = formData.surname.trim();
+        user.contactNumber = formData.contactNumber.trim();
+        user.address = formData.address.trim();
+        user.profileImage = profileImage || undefined;
+      }
+
       Alert.alert("Success", "Profile updated successfully!");
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
       Alert.alert("Error", "Failed to update profile. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleImageUpload = async () => {
-    try {
-      const selectedImage = await pickImage();
-      if (selectedImage) {
-        setProfileImage(selectedImage);
-        // TODO: Upload image to Firebase Storage
-        // For now, just show success message and update local state
-        Alert.alert("Success", "Profile image updated!");
+    if (!user) {
+      Alert.alert("Error", "User not authenticated");
+      return;
+    }
 
-        // Update user object with new profile image
-        if (user) {
-          user.profileImage = selectedImage;
-        }
+    try {
+      setUploadingImage(true);
+
+      const selectedImage = await pickImage();
+      if (!selectedImage) {
+        return; // User cancelled
       }
+
+      // Validate the image
+      if (!validateProfileImage(selectedImage)) {
+        Alert.alert(
+          "Error",
+          "Invalid image format. Please select a valid image file.",
+        );
+        return;
+      }
+
+      // Upload image to Firebase Storage
+      const downloadURL = await uploadProfileImage(selectedImage, user.uid);
+
+      // Save the image URL to Firestore
+      await saveProfileImage(user.uid, downloadURL);
+
+      // Update local state
+      setProfileImage(downloadURL);
+
+      Alert.alert("Success", "Profile image updated successfully!");
     } catch (error) {
       console.error("Error uploading image:", error);
       Alert.alert("Error", "Failed to upload profile image. Please try again.");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -270,13 +320,18 @@ export default function ProfileScreen() {
         {isEditing && (
           <View style={styles.actions}>
             <TouchableOpacity
-              style={styles.saveButton}
+              style={[styles.saveButton, loading && styles.disabledButton]}
               onPress={handleUpdateProfile}
+              disabled={loading}
             >
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+              {loading ? (
+                <Text style={styles.saveButtonText}>Saving...</Text>
+              ) : (
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.cancelButton}
+              style={[styles.cancelButton, loading && styles.disabledButton]}
               onPress={() => {
                 setIsEditing(false);
                 setFormData({
@@ -287,6 +342,7 @@ export default function ProfileScreen() {
                   address: user?.address || "",
                 });
               }}
+              disabled={loading}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -540,6 +596,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: "center",
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   saveButtonText: {
     color: "#fff",
