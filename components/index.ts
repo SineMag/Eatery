@@ -6,6 +6,7 @@ export { Logo } from "./logo";
 export { ParallaxScrollView } from "./parallax-scroll-view";
 export { ThemedText } from "./themed-text";
 export { ThemedView } from "./themed-view";
+export { UserAvatar } from "./user-avatar";
 
 // UI Components
 export { IconSymbol } from "./ui/icon-symbol";

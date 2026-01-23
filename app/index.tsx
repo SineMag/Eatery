@@ -1,6 +1,7 @@
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { Logo } from "@/components/logo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { UserAvatar } from "@/components/user-avatar";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
@@ -31,24 +32,21 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <ScrollView style={styles.content}>
         <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() =>
+              router.push(user ? "/(tabs)/profile" : "/auth/login")
+            }
+          >
+            <UserAvatar size="medium" />
+          </TouchableOpacity>
           <Logo size="large" />
-          {user ? (
-            <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
-              <IconSymbol
-                name="hand.thumbsup.fill"
-                size={24}
-                color={Colors.light.text}
-              />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={() => router.push("/auth/login")}>
-              <IconSymbol
-                name="hand.point.up.left"
-                size={24}
-                color={Colors.light.text}
-              />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={() => router.push("/(tabs)/cart")}>
+            <IconSymbol
+              name="hand.point.up.left.fill"
+              size={24}
+              color={Colors.light.text}
+            />
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionTitle}>Categories</Text>
