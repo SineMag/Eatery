@@ -28,6 +28,18 @@
     "plugins": [
       "expo-router",
       [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/Eatery Logo.png",
@@ -54,7 +66,8 @@
         "projectId": "eatery-45672",
         "storageBucket": "eatery-45672.firebasestorage.app",
         "messagingSenderId": "306837127782",
-        "appId": "1:306837127782:web:57f21d73dc805ef52523a7"
+        "appId": "1:306837127782:web:57f21d73dc805ef52523a7",
+        "measurementId": "G-XXXXXXXXXX"
       }
     }
   }

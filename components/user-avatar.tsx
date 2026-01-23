@@ -62,6 +62,8 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     alignItems: "center",
+    maxWidth: 60,
+    maxHeight: 60,
   },
   avatarContainer: {
     width: "100%",
@@ -71,5 +73,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderColor: "#e5e5e5",
+    borderWidth: 1,
   },
 });

@@ -65,7 +65,7 @@ export default function RegisterScreen() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       // TODO: Save additional user data to Firestore
-      router.replace("/(tabs)");
+      router.replace("/" as any);
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -87,6 +87,9 @@ export default function RegisterScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
+          <View style={styles.logoContainer}>
+            <Logo size="large" />
+          </View>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Sign up to get started</Text>
 
@@ -178,6 +181,10 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: "center",
     minHeight: "100%",
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,

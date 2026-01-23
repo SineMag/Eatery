@@ -1,3 +1,4 @@
+import { Logo } from "@/components/logo";
 import { auth } from "@/utils/firebase";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -28,7 +29,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/(tabs)");
+      router.replace("/" as any);
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -42,6 +43,9 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <Logo size="large" />
+        </View>
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
@@ -89,6 +93,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: "center",
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,

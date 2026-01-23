@@ -9,6 +9,7 @@ const firebaseConfig = {
   storageBucket: "eatery-45672.firebasestorage.app",
   messagingSenderId: "306837127782",
   appId: "1:306837127782:web:57f21d73dc805ef52523a7",
+  measurementId: "G-XXXXXXXXXX",
 };
 
 export const app = initializeApp(firebaseConfig);

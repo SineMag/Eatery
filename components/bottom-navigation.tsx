@@ -9,7 +9,7 @@ interface BottomNavProps {
   activeTab?: string;
 }
 
-export function BottomNavigation({ activeTab = "home" }: BottomNavProps) {
+export function BottomNavigation({ activeTab }: BottomNavProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { getItemCount } = useCart();
@@ -18,7 +18,7 @@ export function BottomNavigation({ activeTab = "home" }: BottomNavProps) {
   const navItems = [
     {
       id: "home",
-      icon: "hand.thumbsup.fill",
+      icon: "house.fill",
       label: "Home",
       route: "/(tabs)",
     },
@@ -46,6 +46,12 @@ export function BottomNavigation({ activeTab = "home" }: BottomNavProps) {
       icon: "person.crop.circle.fill",
       label: "Profile",
       route: user ? "/(tabs)/profile" : "/auth/login",
+    },
+    {
+      id: "settings",
+      icon: "gearshape.fill",
+      label: "Settings",
+      route: user ? "/(tabs)/settings" : "/auth/login",
     },
   ];
 
@@ -90,40 +96,46 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
-    paddingBottom: 8,
+    paddingBottom: 4,
     paddingTop: 8,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
   },
   navItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
   },
   activeItem: {
     // No additional styling needed, handled by icon and label colors
   },
   iconContainer: {
     position: "relative",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   badge: {
     position: "absolute",
-    top: -8,
-    right: -8,
+    top: -6,
+    right: -6,
     backgroundColor: "#ef4444",
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
     justifyContent: "center",
     alignItems: "center",
   },
   badgeText: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "bold",
   },
   label: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#9ca3af",
   },
   activeLabel: {

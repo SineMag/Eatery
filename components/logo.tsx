@@ -10,13 +10,13 @@ export function Logo({ size = "medium", opacity = 1 }: LogoProps) {
   const getSize = () => {
     switch (size) {
       case "small":
-        return 24;
+        return 40;
       case "medium":
-        return 32;
+        return 64;
       case "large":
-        return 48;
+        return 80;
       default:
-        return 32;
+        return 64;
     }
   };
 
@@ -35,9 +35,21 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     alignItems: "center",
+    maxWidth: 120,
+    maxHeight: 120,
   },
   logo: {
-    width: 32,
-    height: 32,
+    width: 64,
+    height: 64,
+    maxWidth: "100%",
+    maxHeight: "100%",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });
