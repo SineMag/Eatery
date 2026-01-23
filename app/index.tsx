@@ -10,12 +10,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SFSymbols } from "expo-symbols"; // Added import
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const categories = [
+  const categories: { id: string; name: string; icon: SFSymbols }[] = [ // Added type annotation
     { id: "1", name: "Mains", icon: "fork.knife" },
     { id: "2", name: "Starters", icon: "leaf" },
     { id: "3", name: "Desserts", icon: "birthday.cake" },
