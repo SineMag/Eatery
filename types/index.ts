@@ -11,6 +11,9 @@ export interface FoodItem {
   price: number;
   imageUrl: string;
   categoryId: string;
+  restaurant: string; // Added
+  distance: string; // Added
+  deliveryTime: string; // Added
   sides?: Option[];
   drinks?: Option[];
   extras?: Option[];

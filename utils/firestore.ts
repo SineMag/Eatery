@@ -1,8 +1,20 @@
-import { User } from "@/types";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { User, FoodItem } from "@/types";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  deleteDoc,
+} from "firebase/firestore";
 import { db } from "./firebase";
 
 const USERS_COLLECTION = "users";
+const FOOD_ITEMS_COLLECTION = "foodItems"; // New constant for food items collection
 
 /**
  * Save user profile data to Firestore
@@ -125,5 +137,105 @@ export async function userProfileExists(userId: string): Promise<boolean> {
   } catch (error) {
     console.error("Error checking user profile existence:", error);
     return false;
+  }
+}
+
+// --- Food Item Management ---
+
+/**
+ * Add a new food item to Firestore
+ * @param item - The FoodItem object to add
+ * @returns The ID of the newly added item
+ */
+export async function addFoodItem(item: Omit<FoodItem, "id">): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, FOOD_ITEMS_COLLECTION), item);
+    console.log("Food item added with ID:", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding food item:", error);
+    throw new Error("Failed to add food item");
+  }
+}
+
+/**
+ * Fetch all food items for a given category from Firestore
+ * @param categoryId - The ID of the category to filter by
+ * @returns An array of FoodItem objects
+ */
+export async function getFoodItemsByCategory(
+  categoryId: string,
+): Promise<FoodItem[]> {
+  try {
+    const q = query(
+      collection(db, FOOD_ITEMS_COLLECTION),
+      where("categoryId", "==", categoryId),
+    );
+    const querySnapshot = await getDocs(q);
+    const foodItems: FoodItem[] = [];
+    querySnapshot.forEach((doc) => {
+      foodItems.push({ id: doc.id, ...doc.data() } as FoodItem);
+    });
+    console.log(
+      `Fetched ${foodItems.length} food items for category: ${categoryId}`,
+    );
+    return foodItems;
+  } catch (error) {
+    console.error(`Error fetching food items for category ${categoryId}:`, error);
+    throw new Error("Failed to fetch food items by category");
+  }
+}
+
+/**
+ * Fetch a single food item by its ID from Firestore
+ * @param itemId - The ID of the food item to fetch
+ * @returns The FoodItem object or null if not found
+ */
+export async function getFoodItem(itemId: string): Promise<FoodItem | null> {
+  try {
+    const itemRef = doc(db, FOOD_ITEMS_COLLECTION, itemId);
+    const itemDoc = await getDoc(itemRef);
+
+    if (itemDoc.exists()) {
+      return { id: itemDoc.id, ...itemDoc.data() } as FoodItem;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error fetching food item ${itemId}:`, error);
+    throw new Error("Failed to fetch food item");
+  }
+}
+
+/**
+ * Update an existing food item in Firestore
+ * @param itemId - The ID of the food item to update
+ * @param updates - Partial FoodItem object with fields to update
+ */
+export async function updateFoodItem(
+  itemId: string,
+  updates: Partial<FoodItem>,
+): Promise<void> {
+  try {
+    const itemRef = doc(db, FOOD_ITEMS_COLLECTION, itemId);
+    await updateDoc(itemRef, updates);
+    console.log(`Food item ${itemId} updated successfully`);
+  } catch (error) {
+    console.error(`Error updating food item ${itemId}:`, error);
+    throw new Error("Failed to update food item");
+  }
+}
+
+/**
+ * Delete a food item from Firestore
+ * @param itemId - The ID of the food item to delete
+ */
+export async function deleteFoodItem(itemId: string): Promise<void> {
+  try {
+    const itemRef = doc(db, FOOD_ITEMS_COLLECTION, itemId);
+    await deleteDoc(itemRef);
+    console.log(`Food item ${itemId} deleted successfully`);
+  } catch (error) {
+    console.error(`Error deleting food item ${itemId}:`, error);
+    throw new Error("Failed to delete food item");
   }
 }
