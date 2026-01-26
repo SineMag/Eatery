@@ -20,7 +20,7 @@ export function BottomNavigation({ activeTab }: BottomNavProps) {
       id: "home",
       icon: "house.fill",
       label: "Home",
-      route: "/(tabs)",
+      route: "/",
     },
     {
       id: "menu",

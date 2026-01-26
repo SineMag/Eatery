@@ -15,18 +15,9 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: { display: "none" },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          href: "/",
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="cart"
         options={{
@@ -38,6 +29,7 @@ export default function TabLayout() {
               color={color}
             />
           ),
+          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen
@@ -47,6 +39,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="list.bullet.rectangle" color={color} />
           ),
+          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen
@@ -60,6 +53,7 @@ export default function TabLayout() {
               color={color}
             />
           ),
+          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen
@@ -69,6 +63,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="gearshape.fill" color={color} />
           ),
+          tabBarStyle: { display: "none" },
         }}
       />
     </Tabs>
