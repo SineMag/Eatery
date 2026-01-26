@@ -9,6 +9,29 @@ import {
   useState,
 } from "react";
 
+// Import user service for Firestore operations
+import { userService } from "../utils/user-service";
+
+// Function to get user profile from Firestore
+const getUserProfile = async (uid: string) => {
+  try {
+    return await userService.getUserProfile(uid);
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
+  }
+};
+
+const createInitialUserProfile = async (
+  uid: string,
+  email: string,
+  name: string,
+  surname: string,
+) => {
+  // Mock implementation - do nothing for now
+  console.log("Creating initial user profile for:", uid);
+};
+
 interface AuthContextType {
   user: (User & { firebaseUser: FirebaseUser }) | null;
   loading: boolean;
@@ -26,51 +49,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log("Auth state changed:", firebaseUser?.uid || "null");
+
       if (firebaseUser) {
-        try {
-          // Try to fetch user profile from Firestore
-          const userProfile = await getUserProfile(firebaseUser.uid);
+        // Set basic user data immediately to prevent loops
+        const basicUserData = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email!,
+          name: firebaseUser.displayName?.split(" ")[0] || "User",
+          surname:
+            firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
+          contactNumber: "",
+          address: "",
+          firebaseUser,
+        };
 
-          if (userProfile) {
-            // User profile exists, use it
-            setUser({
-              ...userProfile,
-              firebaseUser,
-            });
-          } else {
-            // Create initial user profile if it doesn't exist
-            await createInitialUserProfile(
-              firebaseUser.uid,
-              firebaseUser.email!,
-              firebaseUser.displayName?.split(" ")[0] || "",
-              firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
-            );
+        setUser(basicUserData);
+        console.log("Set basic user data:", basicUserData.name);
 
-            // Fetch the newly created profile
-            const newProfile = await getUserProfile(firebaseUser.uid);
-            if (newProfile) {
+        // Fetch profile data asynchronously in background
+        getUserProfile(firebaseUser.uid)
+          .then((userProfile) => {
+            if (userProfile && userProfile.name) {
+              console.log("Updating with Firestore profile data");
               setUser({
-                ...newProfile,
+                uid: userProfile.uid,
+                email: userProfile.email,
+                name: userProfile.name,
+                surname: userProfile.surname || "",
+                contactNumber: userProfile.contactNumber || "",
+                address: "",
                 firebaseUser,
               });
             }
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          // Fallback to basic user data
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email!,
-            name: firebaseUser.displayName?.split(" ")[0] || "",
-            surname:
-              firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
-            contactNumber: "",
-            address: "",
-            firebaseUser,
+          })
+          .catch((error) => {
+            console.error("Error fetching profile:", error);
           });
-        }
       } else {
+        console.log("User signed out");
         setUser(null);
       }
       setLoading(false);

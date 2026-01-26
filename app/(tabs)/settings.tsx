@@ -1,5 +1,4 @@
-import { AppHeader } from "@/components";
-import { BottomNavigation } from "@/components/bottom-navigation";
+import LayoutWrapper from "@/components/layout-wrapper";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/useAuth";
 import { auth } from "@/utils/firebase";
@@ -19,49 +18,22 @@ export default function SettingsScreen() {
   const { user } = useAuth();
   const router = useRouter();
 
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <AppHeader
-            title="Settings"
-            showProfile={false}
-            showCart={false}
-            showLogo={false}
-          />
-          <View style={styles.notLoggedIn}>
-            <IconSymbol name="gearshape" size={48} color="#9ca3af" />
-            <Text style={styles.notLoggedInText}>
-              Please login to access settings
-            </Text>
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={() => router.push("/auth/login")}
-            >
-              <Text style={styles.loginButtonText}>Sign In</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-        <BottomNavigation activeTab="settings" />
-      </View>
-    );
-  }
-
-  const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await auth.signOut();
-          router.replace("/auth/login");
-        },
-      },
-    ]);
+  const handleSignOut = async () => {
+    console.log("Sign Out button pressed");
+    try {
+      console.log("Attempting to sign out...");
+      await auth.signOut();
+      console.log("Sign out successful");
+      // Use replace instead of push to prevent navigation loops
+      router.replace("/");
+    } catch (error: any) {
+      console.error("Sign out error:", error);
+      Alert.alert("Error", "Failed to sign out. Please try again.");
+    }
   };
 
   const handleDeleteAccount = () => {
+    console.log("About to show Alert dialog");
     Alert.alert(
       "Delete Account",
       "This action cannot be undone. All your data will be permanently deleted. Are you sure?",
@@ -74,7 +46,7 @@ export default function SettingsScreen() {
             try {
               await deleteUser(auth.currentUser!);
               Alert.alert("Success", "Account deleted successfully");
-              router.replace("/auth/login");
+              router.replace("/");
             } catch (error: any) {
               Alert.alert("Error", error.message);
             }
@@ -84,16 +56,28 @@ export default function SettingsScreen() {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <AppHeader
-          title="Settings"
-          showProfile={false}
-          showCart={false}
-          showLogo={false}
-        />
+  if (!user) {
+    return (
+      <LayoutWrapper title="Settings" showBottomNavigation={true}>
+        <View style={styles.notLoggedIn}>
+          <IconSymbol name="gearshape" size={48} color="#9ca3af" />
+          <Text style={styles.notLoggedInText}>
+            Please login to access settings
+          </Text>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => router.push("/auth/login")}
+          >
+            <Text style={styles.loginButtonText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </LayoutWrapper>
+    );
+  }
 
+  return (
+    <LayoutWrapper title="Settings" showBottomNavigation={true}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
 
@@ -108,14 +92,18 @@ export default function SettingsScreen() {
             <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem} onPress={handleSignOut}>
+          <TouchableOpacity
+            style={[styles.settingItem, styles.signOutButton]}
+            onPress={handleSignOut}
+            activeOpacity={0.8}
+          >
             <View style={styles.settingLeft}>
               <IconSymbol name="arrow.right.square" size={24} color="#ef4444" />
               <Text style={[styles.settingText, styles.dangerText]}>
                 Sign Out
               </Text>
             </View>
-            <IconSymbol name="chevron.right" size={16} color="#9ca3af" />
+            <IconSymbol name="chevron.right" size={16} color="#ef4444" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -176,32 +164,13 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <BottomNavigation activeTab="settings" />
-    </View>
+    </LayoutWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
   content: {
     flex: 1,
-    paddingBottom: 80, // Account for bottom navigation
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#11181C",
   },
   notLoggedIn: {
     flex: 1,
@@ -257,5 +226,10 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: "#ef4444",
+  },
+  signOutButton: {
+    backgroundColor: "#fef2f2",
+    borderLeftWidth: 4,
+    borderLeftColor: "#ef4444",
   },
 });

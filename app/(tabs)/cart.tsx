@@ -26,7 +26,7 @@ export default function CartScreen() {
       ]);
       return;
     }
-    router.push("/checkout");
+    router.push("/payment");
   };
 
   const handleClearCart = () => {

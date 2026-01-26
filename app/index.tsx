@@ -1,22 +1,14 @@
-import { AppHeader } from "@/components/app-header";
-import { BottomNavigation } from "@/components/bottom-navigation";
+import LayoutWrapper from "@/components/layout-wrapper";
+import { LocationPermission } from "@/components/location-permission";
 import { SearchBar } from "@/components/search-bar";
 import { Snackbar } from "@/components/snackbar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/useAuth";
 import { searchRestaurantsByLocation } from "@/utils/geocoding";
-import {
-  fetchNearbyRestaurants,
-  formatDistance,
-  getCuisineType,
-  getRestaurantAddress,
-} from "@/utils/openStreetMap";
-import * as Location from "expo-location";
+import { locationService, Restaurant } from "@/utils/location-service";
 import { useRouter } from "expo-router";
-import { SFSymbol } from "expo-symbols";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
   Dimensions,
   Image,
   ScrollView,
@@ -26,20 +18,31 @@ import {
   View,
 } from "react-native";
 
+type SFSymbol = string;
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [location, setLocation] = useState<Location.LocationObject | null>(
-    null,
-  );
-  const [nearbyRestaurants, setNearbyRestaurants] = useState<any[]>([]);
-  const [loadingLocation, setLoadingLocation] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [currentSearchQuery, setCurrentSearchQuery] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  // Location states
+  const [locationPermissionGranted, setLocationPermissionGranted] =
+    useState(false);
+  const [userLocation, setUserLocation] = useState<any>(null);
+  const [nearbyRestaurants, setNearbyRestaurants] = useState<Restaurant[]>([]);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(true);
+
+  // User data states
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [favoriteRestaurants, setFavoriteRestaurants] = useState<any[]>([]);
+  const [mostVisitedRestaurants, setMostVisitedRestaurants] = useState<any[]>(
+    [],
+  );
 
   // Get personalized greeting based on time of day
   const getGreeting = () => {
@@ -49,90 +52,124 @@ export default function HomeScreen() {
     return "Good Evening";
   };
 
-  // Load profile image from storage
+  // Load profile image and user data
   useEffect(() => {
     if (user?.profileImage) {
       setProfileImage(user.profileImage);
     }
+
+    // Load user data when logged in
+    if (user) {
+      loadUserData();
+    }
+
+    // Load restaurants (with or without location)
+    loadRestaurants();
   }, [user]);
 
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
-
-  const requestLocationPermission = async () => {
-    setLoadingLocation(true);
+  // Load restaurants with location support
+  const loadRestaurants = async () => {
+    setLoadingRestaurants(true);
     try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Location Permission",
-          "Permission to access location was denied. Please enable location to see nearby restaurants.",
-          [{ text: "OK" }],
-        );
-        setLoadingLocation(false);
-        return;
-      }
-
-      let currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation);
-      setSnackbarMessage("Location found! Showing restaurants near you");
-      setShowSnackbar(true);
-      fetchNearbyRestaurantsData(currentLocation.coords);
+      const restaurants = await locationService.getNearbyRestaurants();
+      setNearbyRestaurants(restaurants);
     } catch (error) {
-      console.error("Error getting location:", error);
-      Alert.alert("Error", "Failed to get your location. Please try again.");
+      console.error("Error loading restaurants:", error);
     } finally {
-      setLoadingLocation(false);
+      setLoadingRestaurants(false);
     }
   };
 
-  const fetchNearbyRestaurantsData = async (
-    coords: Location.LocationCoords,
-  ) => {
-    try {
-      const restaurants = await fetchNearbyRestaurants(
-        coords.latitude,
-        coords.longitude,
-      );
+  // Handle location permission granted
+  const handleLocationGranted = (location: any) => {
+    setUserLocation(location);
+    setLocationPermissionGranted(true);
+    loadRestaurants(); // Reload restaurants with location
+  };
 
-      // Format data for UI
-      const formattedRestaurants = restaurants.map((restaurant: any) => ({
-        id: restaurant.id.toString(),
-        name: restaurant.tags.name,
-        distance: formatDistance(restaurant.distance),
-        rating: 0, // OpenStreetMap doesn't provide ratings
-        cuisine: getCuisineType(restaurant.tags),
-        vicinity: getRestaurantAddress(restaurant.tags),
-        opening_hours: restaurant.tags.opening_hours,
-        phone: restaurant.tags.phone,
-        website: restaurant.tags.website,
-      }));
+  // Handle location permission denied
+  const handleLocationDenied = () => {
+    setLocationPermissionGranted(true); // Still show the app
+    loadRestaurants(); // Load all restaurants
+  };
 
-      setNearbyRestaurants(formattedRestaurants);
-    } catch (error) {
-      console.error("Error fetching nearby restaurants:", error);
-      // Fall back to mock data if API fails
-      const mockRestaurants = [
-        {
-          id: "1",
-          name: "McDonald's",
-          distance: "0.5 km",
-          rating: 0,
-          cuisine: "Fast Food",
-          vicinity: "123 Main St",
-        },
-        {
-          id: "2",
-          name: "KFC",
-          distance: "0.8 km",
-          rating: 0,
-          cuisine: "Fast Food",
-          vicinity: "456 Broad St",
-        },
-      ];
-      setNearbyRestaurants(mockRestaurants);
-    }
+  // Mock function to load user data (in real app, this would come from Firestore)
+  const loadUserData = () => {
+    // Mock recent orders
+    setRecentOrders([
+      {
+        id: "ORD-12345678",
+        date: "2024-01-25",
+        total: 285,
+        status: "completed",
+        restaurant: "The Grill House",
+        items: ["Grilled Chicken", "Caesar Salad", "Chocolate Cake"],
+      },
+      {
+        id: "ORD-12345677",
+        date: "2024-01-24",
+        total: 156,
+        status: "completed",
+        restaurant: "Pasta Paradise",
+        items: ["Beef Steak", "Fresh Orange Juice"],
+      },
+    ]);
+
+    // Mock favorite restaurants
+    setFavoriteRestaurants([
+      {
+        id: "1",
+        name: "The Grill House",
+        cuisine: "Steakhouse",
+        rating: 4.5,
+        image: require("../assets/images/Main-Images/download.jpg"),
+      },
+      {
+        id: "2",
+        name: "Pasta Paradise",
+        cuisine: "Italian",
+        rating: 4.2,
+        image: require("../assets/images/Main-Images/download (1).jpg"),
+      },
+      {
+        id: "3",
+        name: "Sushi Master",
+        cuisine: "Japanese",
+        rating: 4.8,
+        image: require("../assets/images/Main-Images/images.jpg"),
+      },
+    ]);
+
+    // Mock most visited restaurants (based on order frequency)
+    setMostVisitedRestaurants([
+      {
+        id: "1",
+        name: "The Grill House",
+        visitCount: 8,
+        lastVisited: "2 days ago",
+        cuisine: "Steakhouse",
+        rating: 4.5,
+        image: require("../assets/images/Main-Images/download.jpg"),
+      },
+      {
+        id: "2",
+        name: "Burger Barn",
+        visitCount: 5,
+        lastVisited: "1 week ago",
+        cuisine: "American",
+        rating: 4.0,
+        image: require("../assets/images/Burger-Images/images.jpg"),
+      },
+      {
+        id: "3",
+        name: "Taco Tuesday",
+        visitCount: 3,
+        lastVisited: "2 weeks ago",
+        cuisine: "Mexican",
+        rating: 4.3,
+        image: require("../assets/images/Burger-Images/images (1).jpg"),
+      },
+    ]);
   };
 
   const handleSearch = async (query: string) => {
@@ -141,32 +178,12 @@ export default function HomeScreen() {
 
     try {
       const restaurants = await searchRestaurantsByLocation(query);
-
-      // Format search results
-      const formattedResults = restaurants.map((restaurant: any) => ({
-        id: restaurant.id.toString(),
-        name: restaurant.tags.name,
-        distance: formatDistance(restaurant.distance),
-        rating: 0,
-        cuisine: getCuisineType(restaurant.tags),
-        vicinity: getRestaurantAddress(restaurant.tags),
-        opening_hours: restaurant.tags.opening_hours,
-        phone: restaurant.tags.phone,
-        website: restaurant.tags.website,
-        searchLocation: restaurant.searchLocation,
-      }));
-
-      setSearchResults(formattedResults);
-      setSnackbarMessage(
-        `Found ${formattedResults.length} restaurants in ${query}`,
-      );
+      setSearchResults(restaurants);
+      setSnackbarMessage(`Found ${restaurants.length} restaurants in ${query}`);
       setShowSnackbar(true);
     } catch (error) {
       console.error("Error searching restaurants:", error);
-      Alert.alert(
-        "Search Error",
-        "Failed to search restaurants. Please try again.",
-      );
+      alert("Failed to search restaurants. Please try again.");
     } finally {
       setSearchLoading(false);
     }
@@ -261,196 +278,493 @@ export default function HomeScreen() {
   });
 
   return (
-    <View style={[styles.container, dynamicStyles.container]}>
-      <ScrollView style={styles.content}>
-        <AppHeader
-          showProfile={true}
-          showCart={true}
-          showLogo={true}
-          customProfileImage={profileImage}
+    <LayoutWrapper>
+      {!locationPermissionGranted ? (
+        <LocationPermission
+          onLocationGranted={handleLocationGranted}
+          onLocationDenied={handleLocationDenied}
         />
-
-        {/* Personalized Welcome Section */}
-        {user && (
-          <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeText}>
-              {getGreeting()}, {user.name}!
-            </Text>
-          </View>
-        )}
-
-        {/* Search Section */}
-        <View style={styles.searchSection}>
-          <SearchBar
-            onSearch={handleSearch}
-            placeholder="Search restaurants in any city..."
-            loading={searchLoading}
-          />
-        </View>
-
-        {/* Search Results */}
-        {searchResults.length > 0 && (
-          <View style={styles.searchResultsSection}>
-            <View style={styles.searchResultsHeader}>
-              <Text
-                style={[styles.searchResultsTitle, dynamicStyles.sectionTitle]}
-              >
-                Restaurants in {currentSearchQuery}
+      ) : !user ? (
+        // Landing screen for unauthenticated users
+        <ScrollView
+          style={styles.landingContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Hero Section */}
+          <View style={styles.heroSection}>
+            <View style={styles.heroContent}>
+              <Image
+                source={require("../assets/images/Eatery Logo.png")}
+                style={styles.heroLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.heroTitle}>Welcome to Eatery</Text>
+              <Text style={styles.heroSubtitle}>
+                Delicious food delivered to your doorstep
               </Text>
+
+              <View style={styles.authButtons}>
+                <TouchableOpacity
+                  style={styles.signInButton}
+                  onPress={() => router.push("/auth/login")}
+                >
+                  <Text style={styles.signInButtonText}>Sign In</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.registerButton}
+                  onPress={() => router.push("/auth/register")}
+                >
+                  <Text style={styles.registerButtonText}>Register</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Sneak Peek Section */}
+          <View style={styles.sneakPeekSection}>
+            <Text style={styles.sectionTitle}>What's Inside</Text>
+
+            <View style={styles.previewGrid}>
               <TouchableOpacity
-                onPress={clearSearch}
-                style={styles.clearSearchButton}
+                style={styles.previewCard}
+                onPress={() => router.push("/menu/mains")}
               >
-                <IconSymbol name="xmark" size={16} color="#9ca3af" />
-                <Text style={styles.clearSearchText}>Clear</Text>
+                <Image
+                  source={require("../public/Main -Menu.png")}
+                  style={styles.previewImage}
+                />
+                <Text style={styles.previewTitle}>Delicious Mains</Text>
+                <Text style={styles.previewDescription}>
+                  Premium dishes crafted with care
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.previewCard}
+                onPress={() => router.push("/menu/starters")}
+              >
+                <Image
+                  source={require("../public/Starters - Menu.png")}
+                  style={styles.previewImage}
+                />
+                <Text style={styles.previewTitle}>Tasty Starters</Text>
+                <Text style={styles.previewDescription}>
+                  Perfect appetizers to begin your meal
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.previewCard}
+                onPress={() => router.push("/menu/desserts")}
+              >
+                <Image
+                  source={require("../public/Dessert - Menu.png")}
+                  style={styles.previewImage}
+                />
+                <Text style={styles.previewTitle}>Sweet Desserts</Text>
+                <Text style={styles.previewDescription}>
+                  Indulgent treats to satisfy your cravings
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.previewCard}
+                onPress={() => router.push("/menu/beverages")}
+              >
+                <Image
+                  source={require("../public/Beverages - Menu.png")}
+                  style={styles.previewImage}
+                />
+                <Text style={styles.previewTitle}>Refreshing Beverages</Text>
+                <Text style={styles.previewDescription}>
+                  Cool drinks and hot beverages
+                </Text>
               </TouchableOpacity>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.horizontalScroll}
-            >
-              {searchResults.map((restaurant) => (
-                <TouchableOpacity
-                  key={restaurant.id}
-                  style={[styles.restaurantCard, dynamicStyles.restaurantCard]}
-                  onPress={() => router.push(`/menu/${restaurant.id}`)}
-                >
-                  <View
-                    style={[
-                      styles.restaurantImage,
-                      dynamicStyles.restaurantImage,
-                    ]}
-                  >
-                    <IconSymbol name="fork.knife" size={32} color="#fff" />
-                  </View>
-                  <Text
-                    style={[
-                      styles.restaurantName,
-                      dynamicStyles.restaurantName,
-                    ]}
-                  >
-                    {restaurant.name}
-                  </Text>
-                  <Text style={styles.restaurantCuisine}>
-                    {restaurant.cuisine}
-                  </Text>
-                  <View style={styles.restaurantInfo}>
-                    <Text style={styles.restaurantDistance}>
-                      {restaurant.distance}
-                    </Text>
-                    <View style={styles.rating}>
-                      <IconSymbol name="star.fill" size={12} color="#fbbf24" />
-                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.searchLocation} numberOfLines={1}>
-                    📍 {restaurant.searchLocation}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
           </View>
-        )}
 
-        {/* Location Section */}
-        <View style={styles.locationSection}>
-          <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
-            Nearby Restaurants
-          </Text>
-          {loadingLocation ? (
-            <View style={styles.loadingContainer}>
-              <IconSymbol name="location" size={24} color="#9ca3af" />
-              <Text style={styles.loadingText}>Getting your location...</Text>
-            </View>
-          ) : location ? null : (
-            <TouchableOpacity
-              style={styles.enableLocationButton}
-              onPress={requestLocationPermission}
-            >
-              <IconSymbol name="location" size={20} color="#fff" />
-              <Text style={styles.enableLocationText}>Enable Location</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+          {/* Features Section */}
+          <View style={styles.featuresSection}>
+            <Text style={styles.sectionTitle}>Why Choose Eatery</Text>
 
-        {/* Nearby Restaurants */}
-        {nearbyRestaurants.length > 0 && (
-          <View style={styles.nearbySection}>
-            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
-              Recommended Near You
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.horizontalScroll}
-            >
-              {nearbyRestaurants.map((restaurant) => (
-                <TouchableOpacity
-                  key={restaurant.id}
-                  style={[styles.restaurantCard, dynamicStyles.restaurantCard]}
-                  onPress={() => router.push(`/menu/${restaurant.id}`)}
-                >
-                  <View
-                    style={[
-                      styles.restaurantImage,
-                      dynamicStyles.restaurantImage,
-                    ]}
-                  >
-                    <IconSymbol name="fork.knife" size={32} color="#fff" />
-                  </View>
-                  <Text
-                    style={[
-                      styles.restaurantName,
-                      dynamicStyles.restaurantName,
-                    ]}
-                  >
-                    {restaurant.name}
-                  </Text>
-                  <Text style={styles.restaurantCuisine}>
-                    {restaurant.cuisine}
-                  </Text>
-                  <View style={styles.restaurantInfo}>
-                    <Text style={styles.restaurantDistance}>
-                      {restaurant.distance}
-                    </Text>
-                    <View style={styles.rating}>
-                      <IconSymbol name="star.fill" size={12} color="#fbbf24" />
-                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Categories Section */}
-        <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
-          Categories
-        </Text>
-        <View style={styles.categoryGrid}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[styles.categoryCard, dynamicStyles.categoryCard]}
-              onPress={() => router.push(`/menu/${category.id}`)}
-            >
-              <View style={styles.categoryImageContainer}>
-                <Image
-                  source={getCategoryImage(category.name)}
-                  style={styles.categoryImage}
-                  resizeMode="cover"
+            <View style={styles.featureList}>
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  name="checkmark.circle.fill"
+                  size={24}
+                  color="#10b981"
                 />
+                <Text style={styles.featureText}>
+                  Fast delivery to your location
+                </Text>
               </View>
-              <Text style={[styles.categoryName, dynamicStyles.categoryName]}>
-                {category.name}
-              </Text>
+
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  name="checkmark.circle.fill"
+                  size={24}
+                  color="#10b981"
+                />
+                <Text style={styles.featureText}>
+                  Fresh ingredients every time
+                </Text>
+              </View>
+
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  name="checkmark.circle.fill"
+                  size={24}
+                  color="#10b981"
+                />
+                <Text style={styles.featureText}>Easy online ordering</Text>
+              </View>
+
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  name="checkmark.circle.fill"
+                  size={24}
+                  color="#10b981"
+                />
+                <Text style={styles.featureText}>Secure payment options</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Call to Action */}
+          <View style={styles.ctaSection}>
+            <Text style={styles.ctaTitle}>Ready to get started?</Text>
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={() => router.push("/auth/register")}
+            >
+              <Text style={styles.ctaButtonText}>Create Account</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-      <BottomNavigation activeTab="home" />
+          </View>
+        </ScrollView>
+      ) : (
+        // Regular content for authenticated users
+        <ScrollView style={styles.content}>
+          {/* Personalized Welcome Section */}
+          {user && (
+            <View style={styles.welcomeSection}>
+              <Text style={styles.welcomeText}>
+                {getGreeting()}, {user.name}!
+              </Text>
+            </View>
+          )}
+
+          {/* Search Section */}
+          <View style={styles.searchSection}>
+            <SearchBar
+              onSearch={handleSearch}
+              placeholder="Search restaurants in any city..."
+              loading={searchLoading}
+            />
+          </View>
+
+          {/* Nearby Restaurants Section */}
+          <View style={styles.nearbySection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {userLocation ? "Nearby Restaurants" : "All Restaurants"}
+              </Text>
+              {userLocation && (
+                <Text style={styles.locationText}>
+                  📍 {userLocation.latitude.toFixed(2)},{" "}
+                  {userLocation.longitude.toFixed(2)}
+                </Text>
+              )}
+            </View>
+
+            {loadingRestaurants ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Loading restaurants...</Text>
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.restaurantsScroll}
+              >
+                {nearbyRestaurants.map((restaurant) => (
+                  <TouchableOpacity
+                    key={restaurant.id}
+                    style={styles.restaurantCard}
+                    onPress={() => router.push(`/menu/mains`)}
+                  >
+                    <Image
+                      source={{ uri: restaurant.image }}
+                      style={styles.restaurantImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.restaurantInfo}>
+                      <Text style={styles.restaurantName}>
+                        {restaurant.name}
+                      </Text>
+                      <Text style={styles.restaurantCuisine}>
+                        {restaurant.cuisine}
+                      </Text>
+                      <View style={styles.restaurantMeta}>
+                        <View style={styles.rating}>
+                          <IconSymbol
+                            name="star.fill"
+                            size={12}
+                            color="#fbbf24"
+                          />
+                          <Text style={styles.ratingText}>
+                            {restaurant.rating}
+                          </Text>
+                        </View>
+                        {restaurant.distance && (
+                          <Text style={styles.distanceText}>
+                            {restaurant.distance.toFixed(1)} km
+                          </Text>
+                        )}
+                      </View>
+                      <View style={styles.deliveryInfo}>
+                        <Text style={styles.deliveryTime}>
+                          {restaurant.deliveryTime}
+                        </Text>
+                        <Text style={styles.deliveryFee}>
+                          R{restaurant.deliveryFee} delivery
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* Recent Orders - Only show if user has orders */}
+          {user && recentOrders.length > 0 && (
+            <View style={styles.userSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recent Orders</Text>
+                <TouchableOpacity onPress={() => router.push("/orders" as any)}>
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
+                {recentOrders.slice(0, 3).map((order) => (
+                  <TouchableOpacity key={order.id} style={styles.orderCard}>
+                    <View style={styles.orderHeader}>
+                      <Text style={styles.orderRestaurant}>
+                        {order.restaurant}
+                      </Text>
+                      <Text style={styles.orderDate}>{order.date}</Text>
+                    </View>
+                    <Text style={styles.orderItems}>
+                      {order.items.slice(0, 2).join(", ")}
+                    </Text>
+                    <Text style={styles.orderTotal}>R{order.total}</Text>
+                    <View
+                      style={[
+                        styles.orderStatus,
+                        { backgroundColor: "#10b981" },
+                      ]}
+                    >
+                      <Text style={styles.orderStatusText}>Delivered</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Favorite Restaurants - Only show if user has favorites */}
+          {user && favoriteRestaurants.length > 0 && (
+            <View style={styles.userSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Favorite Restaurants</Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/favorites" as any)}
+                >
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
+                {favoriteRestaurants.map((restaurant) => (
+                  <TouchableOpacity
+                    key={restaurant.id}
+                    style={[styles.restaurantCard, { width: 140 }]}
+                  >
+                    <Image
+                      source={restaurant.image}
+                      style={[styles.restaurantImage, { height: 80 }]}
+                    />
+                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                    <Text style={styles.restaurantCuisine}>
+                      {restaurant.cuisine}
+                    </Text>
+                    <View style={styles.rating}>
+                      <IconSymbol name="star.fill" size={12} color="#fbbf24" />
+                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Most Visited Restaurants - Only show if user has visit history */}
+          {user && mostVisitedRestaurants.length > 0 && (
+            <View style={styles.userSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Most Visited</Text>
+                <TouchableOpacity onPress={() => router.push("/")}>
+                  <Text style={styles.seeAllText}>Explore More</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
+                {mostVisitedRestaurants.map((restaurant) => (
+                  <TouchableOpacity
+                    key={restaurant.id}
+                    style={styles.restaurantCard}
+                  >
+                    <Image
+                      source={restaurant.image}
+                      style={styles.restaurantImage}
+                    />
+                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                    <Text style={styles.restaurantCuisine}>
+                      {restaurant.cuisine}
+                    </Text>
+                    <View style={styles.visitInfo}>
+                      <Text style={styles.visitCount}>
+                        {restaurant.visitCount} visits
+                      </Text>
+                      <Text style={styles.lastVisited}>
+                        {restaurant.lastVisited}
+                      </Text>
+                    </View>
+                    <View style={styles.rating}>
+                      <IconSymbol name="star.fill" size={12} color="#fbbf24" />
+                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <View style={styles.searchResultsSection}>
+              <View style={styles.searchResultsHeader}>
+                <Text
+                  style={[
+                    styles.searchResultsTitle,
+                    dynamicStyles.sectionTitle,
+                  ]}
+                >
+                  Restaurants in {currentSearchQuery}
+                </Text>
+                <TouchableOpacity
+                  onPress={clearSearch}
+                  style={styles.clearSearchButton}
+                >
+                  <IconSymbol name="xmark" size={16} color="#9ca3af" />
+                  <Text style={styles.clearSearchText}>Clear</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
+                {searchResults.map((restaurant) => (
+                  <TouchableOpacity
+                    key={restaurant.id}
+                    style={[
+                      styles.restaurantCard,
+                      dynamicStyles.restaurantCard,
+                    ]}
+                    onPress={() => router.push(`/menu/${restaurant.id}`)}
+                  >
+                    <View
+                      style={[
+                        styles.restaurantImage,
+                        dynamicStyles.restaurantImage,
+                      ]}
+                    >
+                      <IconSymbol name="fork.knife" size={32} color="#fff" />
+                    </View>
+                    <Text
+                      style={[
+                        styles.restaurantName,
+                        dynamicStyles.restaurantName,
+                      ]}
+                    >
+                      {restaurant.name}
+                    </Text>
+                    <Text style={styles.restaurantCuisine}>
+                      {restaurant.cuisine}
+                    </Text>
+                    <View style={styles.restaurantInfo}>
+                      <Text style={styles.restaurantDistance}>
+                        {restaurant.distance}
+                      </Text>
+                      <View style={styles.rating}>
+                        <IconSymbol
+                          name="star.fill"
+                          size={12}
+                          color="#fbbf24"
+                        />
+                        <Text style={styles.ratingText}>
+                          {restaurant.rating}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.searchLocation} numberOfLines={1}>
+                      {restaurant.searchLocation}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Categories Section */}
+          <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>
+            Categories
+          </Text>
+          <View style={styles.categoryGrid}>
+            {categories.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[styles.categoryCard, dynamicStyles.categoryCard]}
+                onPress={() =>
+                  router.push(`/menu/${category.name.toLowerCase()}`)
+                }
+              >
+                <View style={styles.categoryImageContainer}>
+                  <Image
+                    source={getCategoryImage(category.name)}
+                    style={styles.categoryImage}
+                  />
+                </View>
+                <Text style={[styles.categoryName, dynamicStyles.categoryName]}>
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      )}
       <Snackbar
         visible={showSnackbar}
         message={snackbarMessage}
@@ -458,7 +772,7 @@ export default function HomeScreen() {
         duration={1500}
         onHide={() => setShowSnackbar(false)}
       />
-    </View>
+    </LayoutWrapper>
   );
 }
 
@@ -472,6 +786,152 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingBottom: 80, // Account for bottom navigation
+  },
+  landingContent: {
+    flex: 1,
+  },
+  heroSection: {
+    backgroundColor: "#f8fafc",
+    paddingVertical: 60,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  heroContent: {
+    alignItems: "center",
+    maxWidth: 400,
+  },
+  heroLogo: {
+    width: 200,
+    height: 60,
+    marginBottom: 20,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#11181C",
+    textAlign: "center",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  authButtons: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+  },
+  signInButton: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#11181C",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  signInButtonText: {
+    color: "#11181C",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  registerButton: {
+    flex: 1,
+    backgroundColor: "#11181C",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  registerButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  sneakPeekSection: {
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+  },
+  previewGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  previewCard: {
+    width: "48%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: "hidden",
+  },
+  previewImage: {
+    width: "100%",
+    height: 120,
+    resizeMode: "cover",
+  },
+  previewTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#11181C",
+    padding: 12,
+    paddingBottom: 4,
+  },
+  previewDescription: {
+    fontSize: 12,
+    color: "#6b7280",
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    lineHeight: 16,
+  },
+  featuresSection: {
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    backgroundColor: "#f8fafc",
+  },
+  featureList: {
+    gap: 16,
+  },
+  featureItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  featureText: {
+    fontSize: 16,
+    color: "#374151",
+    flex: 1,
+  },
+  ctaSection: {
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  ctaTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#11181C",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  ctaButton: {
+    backgroundColor: "#11181C",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  ctaButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   welcomeSection: {
     paddingHorizontal: 16,
@@ -491,10 +951,6 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 12,
   },
-  locationSection: {
-    margin: 16,
-    marginBottom: 8,
-  },
   loadingContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -504,35 +960,34 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   loadingText: {
-    marginLeft: 8,
-    color: "#6b7280",
     fontSize: 14,
+    color: "#6b7280",
   },
-  enableLocationButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    backgroundColor: "#11181C",
-    borderRadius: 8,
-  },
-  enableLocationText: {
-    marginLeft: 8,
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  // Nearby Restaurants Section Styles
   nearbySection: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
-  horizontalScroll: {
-    paddingLeft: 16,
+  locationText: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontStyle: "italic",
+  },
+  restaurantsScroll: {
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
   },
   restaurantCard: {
-    width: 160,
+    width: 200,
     backgroundColor: "#fff",
     borderRadius: 12,
-    marginRight: 12,
+    marginRight: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -540,33 +995,46 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   restaurantImage: {
-    height: 80,
-    backgroundColor: "#11181C",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
+    width: "100%",
+    height: 120,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  restaurantInfo: {
+    padding: 12,
   },
   restaurantName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#11181C",
-    marginHorizontal: 8,
+    marginBottom: 4,
   },
   restaurantCuisine: {
-    fontSize: 12,
+    fontSize: 14,
     color: "#6b7280",
-    marginHorizontal: 8,
     marginBottom: 8,
   },
-  restaurantInfo: {
+  restaurantMeta: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 8,
-    paddingBottom: 8,
+    marginBottom: 8,
   },
-  restaurantDistance: {
+  distanceText: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+  deliveryInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  deliveryTime: {
+    fontSize: 12,
+    color: "#10b981",
+    fontWeight: "500",
+  },
+  deliveryFee: {
     fontSize: 12,
     color: "#6b7280",
   },
@@ -648,5 +1116,85 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginHorizontal: 8,
     marginBottom: 8,
+  },
+  // User data section styles
+  userSection: {
+    backgroundColor: "#fff",
+    margin: 16,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 12,
+  },
+  userSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  seeAllText: {
+    fontSize: 14,
+    color: "#3b82f6",
+    fontWeight: "500",
+  },
+  horizontalScroll: {
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+  },
+  // Order card styles
+  orderCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 8,
+    padding: 12,
+    marginRight: 12,
+    width: 200,
+  },
+  orderHeader: {
+    marginBottom: 8,
+  },
+  orderRestaurant: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#11181C",
+    marginBottom: 2,
+  },
+  orderDate: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+  orderItems: {
+    fontSize: 12,
+    color: "#374151",
+    marginBottom: 8,
+  },
+  orderTotal: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#11181C",
+    marginBottom: 8,
+  },
+  orderStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: "flex-start",
+  },
+  orderStatusText: {
+    fontSize: 10,
+    color: "#fff",
+    fontWeight: "500",
+  },
+  // Additional restaurant card styles for user data
+  visitInfo: {
+    paddingHorizontal: 8,
+    marginBottom: 4,
+  },
+  visitCount: {
+    fontSize: 11,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  lastVisited: {
+    fontSize: 10,
+    color: "#6b7280",
   },
 });

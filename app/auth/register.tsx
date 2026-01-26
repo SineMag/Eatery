@@ -13,6 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Logo } from "../../components/logo";
+import { userService } from "../../utils/user-service";
 
 export default function RegisterScreen() {
   const [formData, setFormData] = useState({
@@ -28,6 +30,9 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const handleRegister = async () => {
+    console.log("handleRegister called!");
+    console.log("Current loading state:", loading);
+
     const {
       email,
       password,
@@ -38,6 +43,13 @@ export default function RegisterScreen() {
       address,
     } = formData;
 
+    console.log("Form data:", {
+      email,
+      name,
+      surname,
+      hasPassword: !!password,
+    });
+
     if (
       !email ||
       !password ||
@@ -47,28 +59,92 @@ export default function RegisterScreen() {
       !contactNumber ||
       !address
     ) {
+      console.log("Validation failed - missing fields");
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     if (password !== confirmPassword) {
+      console.log("Password mismatch");
       Alert.alert("Error", "Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
+      console.log("Password too short");
       Alert.alert("Error", "Password must be at least 6 characters");
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log("Invalid email format");
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
+
+    // Additional password validation
+    if (!/(?=.*[a-zA-Z])/.test(password)) {
+      console.log("Password needs letter");
+      Alert.alert("Error", "Password must contain at least one letter");
+      return;
+    }
+
+    console.log("All validation passed, setting loading to true");
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      // TODO: Save additional user data to Firestore
+      console.log("Creating user with email:", email);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      console.log("User created successfully:", userCredential.user.uid);
+
+      // Save user profile to Firestore
+      try {
+        await userService.createUserProfile({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email!,
+          name: name.trim(),
+          surname: surname.trim(),
+          contactNumber: contactNumber.trim(),
+        });
+        console.log("User profile saved to Firestore");
+      } catch (profileError) {
+        console.error("Error saving user profile:", profileError);
+        // Continue anyway - user was created in Auth
+      }
+
+      Alert.alert("Success", "Account created successfully!");
       router.replace("/" as any);
     } catch (error: any) {
-      Alert.alert("Error", error.message);
+      console.error("Registration error:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+
+      let errorMessage = "Registration failed. Please try again.";
+
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage =
+          "This email is already registered. Please use a different email or sign in.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address. Please check and try again.";
+      } else if (error.code === "auth/operation-not-allowed") {
+        errorMessage =
+          "Email/password accounts are not enabled. Please contact support.";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage =
+          "Password is too weak. Please choose a stronger password.";
+      } else if (error.code === "auth/network-request-failed") {
+        errorMessage =
+          "Network error. Please check your internet connection and try again.";
+      }
+
+      Alert.alert("Registration Error", errorMessage);
     } finally {
+      console.log("Setting loading back to false");
       setLoading(false);
     }
   };
@@ -185,6 +261,10 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginBottom: 32,
+  },
+  logo: {
+    width: 200,
+    height: 60,
   },
   title: {
     fontSize: 32,
