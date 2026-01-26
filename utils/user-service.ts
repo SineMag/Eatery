@@ -72,6 +72,14 @@ class UserService {
       return null;
     } catch (error) {
       console.error("Error getting user profile:", error);
+      // Check if it's an offline error
+      if (
+        error instanceof Error &&
+        error.message.includes("client is offline")
+      ) {
+        console.log("Firebase is offline, returning null for user profile");
+        return null;
+      }
       throw error;
     }
   }

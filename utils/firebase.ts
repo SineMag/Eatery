@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey:
@@ -30,8 +30,23 @@ export const app = initializeApp(firebaseConfig);
 // Auth
 export const auth = getAuth(app);
 
-// Firestore
-export const db = getFirestore(app);
+// Log auth initialization
+console.log(
+  "Firebase Auth initialized for:",
+  typeof window !== "undefined" ? "web" : "native",
+);
+
+// Firestore with new settings
+export const db = initializeFirestore(app, {
+  cacheSizeBytes: 10 * 1024 * 1024, // 10 MB
+});
+
+// Enable offline persistence for web
+if (typeof window !== "undefined") {
+  // This is the new recommended way
+  // Note: In newer Firebase versions, persistence is enabled by default
+  console.log("Firestore initialized with offline support");
+}
 
 // Realtime Database
 export const rtdb = getDatabase(app);

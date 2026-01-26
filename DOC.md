@@ -45,3 +45,6 @@ For users who already have an account
 user can click on the card on Catergories, to show menus and restuarants serving that type of food. for example, if user clicks on Beverages, it should show all beverages available from all restaurants, along with their details, and price and how far the restuarant is from their current location.
 
 
+
+-- not registered or logged in?/
+- no problem, user can still browse the menue from resturants but cannot place an order

@@ -6,6 +6,7 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -18,6 +19,11 @@ const getUserProfile = async (uid: string) => {
     return await userService.getUserProfile(uid);
   } catch (error) {
     console.error("Error fetching user profile:", error);
+    // Check if it's an offline error and return null gracefully
+    if (error instanceof Error && error.message.includes("client is offline")) {
+      console.log("Firebase is offline, using basic user data only");
+      return null;
+    }
     return null;
   }
 };
@@ -47,10 +53,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (User & { firebaseUser: FirebaseUser }) | null
   >(null);
   const [loading, setLoading] = useState(true);
+  const authStateRef = useRef<string | null>(null);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log("Auth state changed:", firebaseUser?.uid || "null");
+      const currentUid = firebaseUser?.uid || null;
+
+      // Allow all changes during initialization
+      if (!isInitializedRef.current) {
+        console.log("Initial auth state:", currentUid);
+        authStateRef.current = currentUid;
+        isInitializedRef.current = true;
+      } else {
+        // Only prevent exact duplicates after initialization
+        if (authStateRef.current === currentUid) {
+          console.log("Duplicate auth state detected, skipping");
+          return;
+        }
+        console.log(
+          "Auth state changed from",
+          authStateRef.current,
+          "to",
+          currentUid,
+        );
+        authStateRef.current = currentUid;
+      }
 
       if (firebaseUser) {
         // Set basic user data immediately to prevent loops
@@ -82,10 +110,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 address: "",
                 firebaseUser,
               });
+            } else {
+              console.log("No profile data found, using basic user data");
             }
           })
           .catch((error) => {
             console.error("Error fetching profile:", error);
+            console.log("Continuing with basic user data");
           });
       } else {
         console.log("User signed out");

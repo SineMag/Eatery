@@ -20,6 +20,14 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Debug: Check Firebase Auth on mount
+  React.useEffect(() => {
+    console.log("=== Login Screen Mount ===");
+    console.log("Auth instance:", !!auth);
+    console.log("Current user:", auth.currentUser);
+    console.log("Auth config:", auth.config);
+  }, []);
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
@@ -28,12 +36,116 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      console.log("Attempting login with email:", email);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      console.log("Login successful:", userCredential.user.uid);
       router.replace("/" as any);
     } catch (error: any) {
-      Alert.alert("Error", error.message);
+      console.error("Login error:", error);
+      let errorMessage = "Login failed. Please try again.";
+
+      if (error.code === "auth/user-not-found") {
+        errorMessage = "No account found with this email.";
+      } else if (error.code === "auth/wrong-password") {
+        errorMessage = "Incorrect password.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address.";
+      } else if (error.code === "auth/too-many-requests") {
+        errorMessage = "Too many failed attempts. Please try again later.";
+      } else if (error.code === "auth/operation-not-allowed") {
+        errorMessage =
+          "Email/Password authentication is not enabled. Please check Firebase Console.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert("Login Error", errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Test function for debugging
+  const testEmail = "test@example.com";
+  const testPassword = "test123456";
+
+  const handleTestAuth = async () => {
+    console.log("=== Testing Firebase Auth ===");
+
+    try {
+      console.log("Attempting to create test account...");
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        testEmail,
+        testPassword,
+      );
+      console.log("Test login successful:", userCredential.user.uid);
+    } catch (error: any) {
+      console.log("Test login failed (expected):", error.code);
+
+      if (
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/invalid-credential"
+      ) {
+        console.log("Test account doesn't exist, trying to create...");
+        try {
+          console.log("Importing createUserWithEmailAndPassword...");
+          const { createUserWithEmailAndPassword } =
+            await import("firebase/auth");
+          console.log(
+            "Creating user with:",
+            testEmail,
+            "password length:",
+            testPassword.length,
+          );
+
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            testEmail,
+            testPassword,
+          );
+          console.log(
+            "Test account created successfully:",
+            userCredential.user.uid,
+          );
+          Alert.alert(
+            "Success",
+            "Test account created! You can now login with test@example.com / test123456",
+          );
+        } catch (createError: any) {
+          console.error(
+            "Failed to create test account:",
+            createError.code,
+            createError.message,
+          );
+
+          if (createError.code === "auth/email-already-in-use") {
+            Alert.alert(
+              "Account Exists",
+              "Test account already exists! Try logging in with test@example.com / test123456",
+            );
+          } else if (createError.code === "auth/operation-not-allowed") {
+            Alert.alert(
+              "Firebase Configuration Error",
+              "Email/Password authentication is not enabled. Please go to Firebase Console → Authentication → Sign-in method → Enable Email/Password provider.",
+            );
+          } else {
+            Alert.alert(
+              "Account Creation Error",
+              `Failed to create test account: ${createError.code} - ${createError.message}`,
+            );
+          }
+        }
+      } else {
+        Alert.alert(
+          "Auth Test Error",
+          `Error: ${error.code} - ${error.message}`,
+        );
+      }
     }
   };
 
@@ -78,6 +190,11 @@ export default function LoginScreen() {
 
         <TouchableOpacity onPress={() => router.push("/auth/register")}>
           <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+        </TouchableOpacity>
+
+        {/* Debug Test Button - Remove in production */}
+        <TouchableOpacity style={styles.testButton} onPress={handleTestAuth}>
+          <Text style={styles.testButtonText}>🔧 Test Firebase Auth</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -137,5 +254,19 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     fontSize: 14,
     textAlign: "center",
+  },
+  testButton: {
+    backgroundColor: "#f59e0b",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#d97706",
+  },
+  testButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

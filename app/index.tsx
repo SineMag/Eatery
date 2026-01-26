@@ -751,6 +751,9 @@ const styles = StyleSheet.create({
     width: "48%",
     backgroundColor: "#fff",
     borderRadius: 12,
+    // Web-compatible shadow
+    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    // Native shadow properties
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -855,6 +858,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     marginRight: 12,
+    // Web-compatible shadow
+    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    // Native shadow properties
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -913,6 +919,14 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     backgroundColor: "#f3f4f6",
     borderRadius: 12,
+    // Web-compatible shadow
+    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    // Native shadow properties
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
     justifyContent: "center",
     alignItems: "center",
     margin: "1%",

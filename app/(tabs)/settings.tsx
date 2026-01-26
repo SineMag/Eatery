@@ -15,20 +15,29 @@ import {
 } from "react-native";
 
 export default function SettingsScreen() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const [signingOut, setSigningOut] = React.useState(false);
 
   const handleSignOut = async () => {
+    if (loading || signingOut) return; // Prevent sign out during auth state changes or multiple clicks
+
     console.log("Sign Out button pressed");
+    setSigningOut(true);
     try {
       console.log("Attempting to sign out...");
       await auth.signOut();
       console.log("Sign out successful");
-      // Use replace instead of push to prevent navigation loops
-      router.replace("/");
+
+      // Add a small delay to ensure auth state has propagated
+      setTimeout(() => {
+        // Navigate to main home screen for login/register options
+        router.replace("/");
+      }, 100);
     } catch (error: any) {
       console.error("Sign out error:", error);
       Alert.alert("Error", "Failed to sign out. Please try again.");
+      setSigningOut(false);
     }
   };
 
@@ -96,11 +105,12 @@ export default function SettingsScreen() {
             style={[styles.settingItem, styles.signOutButton]}
             onPress={handleSignOut}
             activeOpacity={0.8}
+            disabled={signingOut}
           >
             <View style={styles.settingLeft}>
               <IconSymbol name="arrow.right.square" size={24} color="#ef4444" />
               <Text style={[styles.settingText, styles.dangerText]}>
-                Sign Out
+                {signingOut ? "Signing Out..." : "Sign Out"}
               </Text>
             </View>
             <IconSymbol name="chevron.right" size={16} color="#ef4444" />
