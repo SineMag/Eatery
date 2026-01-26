@@ -45,7 +45,7 @@ export default function MenuScreen() {
       name: "Grilled Chicken Breast",
       description: "Tender grilled chicken breast with herbs and spices",
       price: 120,
-      image: require("../../assets/images/Main-Images/download.jpg"),
+      image: require("../../assets/images/main-dish.jpg"),
       category: "Mains",
       restaurant: "The Grill House",
       distance: "10min away",
@@ -56,7 +56,7 @@ export default function MenuScreen() {
       name: "Beef Steak",
       description: "Premium beef steak cooked to perfection",
       price: 180,
-      image: require("../../assets/images/Main-Images/download (1).jpg"),
+      image: require("../../assets/images/main-dish2.jpg"),
       category: "Mains",
       restaurant: "Steak Master",
       distance: "15min away",
@@ -67,7 +67,7 @@ export default function MenuScreen() {
       name: "Grilled Salmon",
       description: "Fresh Atlantic salmon with lemon butter sauce",
       price: 150,
-      image: require("../../assets/images/Main-Images/images.jpg"),
+      image: require("../../assets/images/main-dish3.jpg"),
       category: "Mains",
       restaurant: "Fine Dining",
       distance: "20min away",
@@ -77,20 +77,20 @@ export default function MenuScreen() {
     {
       id: "starter1",
       name: "Caesar Salad",
-      description: "Crisp romaine lettuce with caesar dressing and croutons",
-      price: 65,
-      image: require("../../assets/images/Starters-Images/download.jpg"),
+      description: "Crisp romaine lettuce with parmesan and croutons",
+      price: 45,
+      image: require("../../assets/images/starters.jpg"),
       category: "Starters",
-      restaurant: "Asian Fusion",
+      restaurant: "Green Garden",
       distance: "8min away",
       deliveryTime: "8min",
     },
     {
       id: "starter2",
       name: "Garlic Bread",
-      description: "Toasted bread with garlic butter and herbs",
-      price: 45,
-      image: require("../../assets/images/Starters-Images/download (2).jpg"),
+      description: "Toasted garlic bread with herbs and cheese",
+      price: 35,
+      image: require("../../assets/images/starters2.jpg"),
       category: "Starters",
       restaurant: "Italian Corner",
       distance: "10min away",
@@ -101,7 +101,7 @@ export default function MenuScreen() {
       name: "Bruschetta",
       description: "Toasted bread with tomatoes, basil, and mozzarella",
       price: 55,
-      image: require("../../assets/images/Starters-Images/images.jpg"),
+      image: require("../../assets/images/starters3.jpg"),
       category: "Starters",
       restaurant: "Healthy Bites",
       distance: "12min away",
@@ -112,7 +112,7 @@ export default function MenuScreen() {
       name: "Soup of the Day",
       description: "Fresh homemade soup with seasonal ingredients",
       price: 50,
-      image: require("../../assets/images/Starters-Images/images (1).jpg"),
+      image: require("../../assets/images/starters4.jpg"),
       category: "Starters",
       restaurant: "Soup Kitchen",
       distance: "7min away",
@@ -124,7 +124,7 @@ export default function MenuScreen() {
       name: "Chocolate Cake",
       description: "Rich chocolate cake with ganache frosting",
       price: 45,
-      image: require("../../assets/images/Dessert-Images/chocolate cake.jpg"),
+      image: require("../../assets/images/chocolate cake.jpg"),
       category: "Desserts",
       restaurant: "KFC (Small Street)",
       distance: "5min away",
@@ -135,7 +135,7 @@ export default function MenuScreen() {
       name: "Tiramisu",
       description: "Classic Italian dessert with coffee and mascarpone",
       price: 55,
-      image: require("../../assets/images/Dessert-Images/cakes.jpg"),
+      image: require("../../assets/images/cakes.jpg"),
       category: "Desserts",
       restaurant: "Sweet Treats",
       distance: "8min away",
@@ -146,7 +146,7 @@ export default function MenuScreen() {
       name: "Ice Cream Sundae",
       description: "Vanilla ice cream with chocolate sauce and toppings",
       price: 35,
-      image: require("../../assets/images/Dessert-Images/ice cream with chocolate.jpg"),
+      image: require("../../assets/images/ice cream with chocolate.jpg"),
       category: "Desserts",
       restaurant: "KFC (Small Street)",
       distance: "5min away",
@@ -157,7 +157,7 @@ export default function MenuScreen() {
       name: "Fruit Tart",
       description: "Fresh seasonal fruits on pastry cream",
       price: 40,
-      image: require("../../assets/images/Dessert-Images/carrot and ice cream cake.jpg"),
+      image: require("../../assets/images/carrot and ice cream cake.jpg"),
       category: "Desserts",
       restaurant: "Bakery House",
       distance: "10min away",
@@ -168,7 +168,7 @@ export default function MenuScreen() {
       name: "Cheesecake",
       description: "New York style cheesecake with berry compote",
       price: 50,
-      image: require("../../assets/images/Dessert-Images/vanilla cake.jpg"),
+      image: require("../../assets/images/vanilla cake.jpg"),
       category: "Desserts",
       restaurant: "Cake Palace",
       distance: "12min away",
@@ -236,7 +236,7 @@ export default function MenuScreen() {
       name: "Classic Burger",
       description: "Beef patty with lettuce, tomato, and onion",
       price: 85,
-      image: require("../../assets/images/Burger-Images/images.jpg"),
+      image: require("../../assets/images/burger.jpg"),
       category: "Burgers",
       restaurant: "Burger Barn",
       distance: "8min away",
@@ -247,7 +247,7 @@ export default function MenuScreen() {
       name: "Cheese Burger",
       description: "Classic burger with melted cheese",
       price: 95,
-      image: require("../../assets/images/Burger-Images/images (1).jpg"),
+      image: require("../../assets/images/burger2.jpg"),
       category: "Burgers",
       restaurant: "Burger Palace",
       distance: "10min away",
@@ -258,7 +258,7 @@ export default function MenuScreen() {
       name: "Bacon Burger",
       description: "Beef patty with crispy bacon and cheese",
       price: 105,
-      image: require("../../assets/images/Burger-Images/images (2).jpg"),
+      image: require("../../assets/images/burger3.jpg"),
       category: "Burgers",
       restaurant: "Burger King",
       distance: "12min away",
@@ -270,7 +270,7 @@ export default function MenuScreen() {
       name: "Red Wine",
       description: "Smooth red wine with rich flavors",
       price: 65,
-      image: require("../../assets/images/Main-Images/download.jpg"),
+      image: require("../../assets/images/main-dish.jpg"),
       category: "Alcohol",
       restaurant: "Wine Cellar",
       distance: "15min away",
@@ -281,7 +281,7 @@ export default function MenuScreen() {
       name: "White Wine",
       description: "Crisp white wine with citrus notes",
       price: 60,
-      image: require("../../assets/images/Main-Images/download (1).jpg"),
+      image: require("../../assets/images/main-dish2.jpg"),
       category: "Alcohol",
       restaurant: "Wine Cellar",
       distance: "15min away",
@@ -292,7 +292,7 @@ export default function MenuScreen() {
       name: "Craft Beer",
       description: "Local craft beer selection",
       price: 45,
-      image: require("../../assets/images/Main-Images/images.jpg"),
+      image: require("../../assets/images/main-dish3.jpg"),
       category: "Alcohol",
       restaurant: "Beer Garden",
       distance: "12min away",
@@ -304,6 +304,41 @@ export default function MenuScreen() {
   const filteredItems = menuItems.filter(
     (item) => item.category.toLowerCase() === category.toLowerCase(),
   );
+
+  // Debug: Log filtering results
+  console.log("=== MENU DEBUG ===");
+  console.log("Category parameter:", category);
+  console.log("Category type:", typeof category);
+  console.log("All menu items count:", menuItems.length);
+  console.log("Filtered items count:", filteredItems.length);
+  console.log("Available categories:", [
+    ...new Set(menuItems.map((item) => item.category)),
+  ]);
+
+  // Log all beverage items specifically
+  const allBeverages = menuItems.filter(
+    (item) => item.category.toLowerCase() === "beverages",
+  );
+  console.log(
+    "All beverage items:",
+    allBeverages.map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+    })),
+  );
+
+  // Fallback: If no items found and category is beverages, show all beverage items
+  const displayItems =
+    filteredItems.length > 0
+      ? filteredItems
+      : category.toLowerCase() === "beverages"
+        ? menuItems.filter(
+            (item) => item.category.toLowerCase() === "beverages",
+          )
+        : filteredItems;
+
+  console.log("Final display items count:", displayItems.length);
 
   const toggleItemSelection = (itemId: string) => {
     setSelectedItems((prev) =>
@@ -371,12 +406,16 @@ export default function MenuScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.menuGrid}>
-          {filteredItems.map((item) => (
+          {displayItems.map((item) => (
             <View key={item.id} style={styles.menuItem}>
               <Image
                 source={item.image}
                 style={styles.itemImage}
                 resizeMode="cover"
+                onError={() => console.log("Image failed to load:", item.image)}
+                onLoad={() =>
+                  console.log("Image loaded successfully:", item.name)
+                }
               />
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.name}</Text>
