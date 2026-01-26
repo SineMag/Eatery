@@ -1,11 +1,8 @@
 import LayoutWrapper from "@/components/layout-wrapper";
-import { LocationPermission } from "@/components/location-permission";
 import { SearchBar } from "@/components/search-bar";
 import { Snackbar } from "@/components/snackbar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/useAuth";
-import { searchRestaurantsByLocation } from "@/utils/geocoding";
-import { locationService, Restaurant } from "@/utils/location-service";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -29,13 +26,6 @@ export default function HomeScreen() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [currentSearchQuery, setCurrentSearchQuery] = useState("");
   const [profileImage, setProfileImage] = useState<string | null>(null);
-
-  // Location states
-  const [locationPermissionGranted, setLocationPermissionGranted] =
-    useState(false);
-  const [userLocation, setUserLocation] = useState<any>(null);
-  const [nearbyRestaurants, setNearbyRestaurants] = useState<Restaurant[]>([]);
-  const [loadingRestaurants, setLoadingRestaurants] = useState(true);
 
   // User data states
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -62,36 +52,7 @@ export default function HomeScreen() {
     if (user) {
       loadUserData();
     }
-
-    // Load restaurants (with or without location)
-    loadRestaurants();
   }, [user]);
-
-  // Load restaurants with location support
-  const loadRestaurants = async () => {
-    setLoadingRestaurants(true);
-    try {
-      const restaurants = await locationService.getNearbyRestaurants();
-      setNearbyRestaurants(restaurants);
-    } catch (error) {
-      console.error("Error loading restaurants:", error);
-    } finally {
-      setLoadingRestaurants(false);
-    }
-  };
-
-  // Handle location permission granted
-  const handleLocationGranted = (location: any) => {
-    setUserLocation(location);
-    setLocationPermissionGranted(true);
-    loadRestaurants(); // Reload restaurants with location
-  };
-
-  // Handle location permission denied
-  const handleLocationDenied = () => {
-    setLocationPermissionGranted(true); // Still show the app
-    loadRestaurants(); // Load all restaurants
-  };
 
   // Mock function to load user data (in real app, this would come from Firestore)
   const loadUserData = () => {
@@ -177,9 +138,13 @@ export default function HomeScreen() {
     setCurrentSearchQuery(query);
 
     try {
-      const restaurants = await searchRestaurantsByLocation(query);
-      setSearchResults(restaurants);
-      setSnackbarMessage(`Found ${restaurants.length} restaurants in ${query}`);
+      // Mock search results for now
+      const mockResults = [
+        { name: "The Grill House", cuisine: "Steakhouse", rating: 4.5 },
+        { name: "Pasta Paradise", cuisine: "Italian", rating: 4.3 },
+      ];
+      setSearchResults(mockResults);
+      setSnackbarMessage(`Found ${mockResults.length} restaurants`);
       setShowSnackbar(true);
     } catch (error) {
       console.error("Error searching restaurants:", error);
@@ -279,12 +244,7 @@ export default function HomeScreen() {
 
   return (
     <LayoutWrapper>
-      {!locationPermissionGranted ? (
-        <LocationPermission
-          onLocationGranted={handleLocationGranted}
-          onLocationDenied={handleLocationDenied}
-        />
-      ) : !user ? (
+      {!user ? (
         // Landing screen for unauthenticated users
         <ScrollView
           style={styles.landingContent}
@@ -463,84 +423,10 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Nearby Restaurants Section */}
-          <View style={styles.nearbySection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                {userLocation ? "Nearby Restaurants" : "All Restaurants"}
-              </Text>
-              {userLocation && (
-                <Text style={styles.locationText}>
-                  📍 {userLocation.latitude.toFixed(2)},{" "}
-                  {userLocation.longitude.toFixed(2)}
-                </Text>
-              )}
-            </View>
-
-            {loadingRestaurants ? (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Loading restaurants...</Text>
-              </View>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.restaurantsScroll}
-              >
-                {nearbyRestaurants.map((restaurant) => (
-                  <TouchableOpacity
-                    key={restaurant.id}
-                    style={styles.restaurantCard}
-                    onPress={() => router.push(`/menu/mains`)}
-                  >
-                    <Image
-                      source={{ uri: restaurant.image }}
-                      style={styles.restaurantImage}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.restaurantInfo}>
-                      <Text style={styles.restaurantName}>
-                        {restaurant.name}
-                      </Text>
-                      <Text style={styles.restaurantCuisine}>
-                        {restaurant.cuisine}
-                      </Text>
-                      <View style={styles.restaurantMeta}>
-                        <View style={styles.rating}>
-                          <IconSymbol
-                            name="star.fill"
-                            size={12}
-                            color="#fbbf24"
-                          />
-                          <Text style={styles.ratingText}>
-                            {restaurant.rating}
-                          </Text>
-                        </View>
-                        {restaurant.distance && (
-                          <Text style={styles.distanceText}>
-                            {restaurant.distance.toFixed(1)} km
-                          </Text>
-                        )}
-                      </View>
-                      <View style={styles.deliveryInfo}>
-                        <Text style={styles.deliveryTime}>
-                          {restaurant.deliveryTime}
-                        </Text>
-                        <Text style={styles.deliveryFee}>
-                          R{restaurant.deliveryFee} delivery
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-
           {/* Recent Orders - Only show if user has orders */}
           {user && recentOrders.length > 0 && (
             <View style={styles.userSection}>
-              <View style={styles.sectionHeader}>
+              <View style={styles.userSectionHeader}>
                 <Text style={styles.sectionTitle}>Recent Orders</Text>
                 <TouchableOpacity onPress={() => router.push("/orders" as any)}>
                   <Text style={styles.seeAllText}>See All</Text>
@@ -580,7 +466,7 @@ export default function HomeScreen() {
           {/* Favorite Restaurants - Only show if user has favorites */}
           {user && favoriteRestaurants.length > 0 && (
             <View style={styles.userSection}>
-              <View style={styles.sectionHeader}>
+              <View style={styles.userSectionHeader}>
                 <Text style={styles.sectionTitle}>Favorite Restaurants</Text>
                 <TouchableOpacity
                   onPress={() => router.push("/favorites" as any)}
@@ -619,7 +505,7 @@ export default function HomeScreen() {
           {/* Most Visited Restaurants - Only show if user has visit history */}
           {user && mostVisitedRestaurants.length > 0 && (
             <View style={styles.userSection}>
-              <View style={styles.sectionHeader}>
+              <View style={styles.userSectionHeader}>
                 <Text style={styles.sectionTitle}>Most Visited</Text>
                 <TouchableOpacity onPress={() => router.push("/")}>
                   <Text style={styles.seeAllText}>Explore More</Text>
@@ -963,31 +849,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6b7280",
   },
-  // Nearby Restaurants Section Styles
-  nearbySection: {
-    marginTop: 24,
-    paddingHorizontal: 16,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  locationText: {
-    fontSize: 12,
-    color: "#6b7280",
-    fontStyle: "italic",
-  },
-  restaurantsScroll: {
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
-  },
+  // Restaurant styles (still used for favorites and most visited)
   restaurantCard: {
-    width: 200,
+    width: 160,
     backgroundColor: "#fff",
     borderRadius: 12,
-    marginRight: 16,
+    marginRight: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -995,46 +862,33 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   restaurantImage: {
-    width: "100%",
-    height: 120,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
-  restaurantInfo: {
-    padding: 12,
+    height: 80,
+    backgroundColor: "#11181C",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
   },
   restaurantName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#11181C",
-    marginBottom: 4,
+    marginHorizontal: 8,
   },
   restaurantCuisine: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#6b7280",
+    marginHorizontal: 8,
     marginBottom: 8,
   },
-  restaurantMeta: {
+  restaurantInfo: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
   },
-  distanceText: {
-    fontSize: 12,
-    color: "#6b7280",
-  },
-  deliveryInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  deliveryTime: {
-    fontSize: 12,
-    color: "#10b981",
-    fontWeight: "500",
-  },
-  deliveryFee: {
+  restaurantDistance: {
     fontSize: 12,
     color: "#6b7280",
   },

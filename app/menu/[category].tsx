@@ -19,6 +19,9 @@ interface MenuItem {
   price: number;
   image: any;
   category: string;
+  restaurant: string;
+  distance: string;
+  deliveryTime: string;
 }
 
 export default function MenuScreen() {
@@ -44,6 +47,9 @@ export default function MenuScreen() {
       price: 120,
       image: require("../../assets/images/Main-Images/download.jpg"),
       category: "Mains",
+      restaurant: "The Grill House",
+      distance: "10min away",
+      deliveryTime: "10min",
     },
     {
       id: "main2",
@@ -52,6 +58,9 @@ export default function MenuScreen() {
       price: 180,
       image: require("../../assets/images/Main-Images/download (1).jpg"),
       category: "Mains",
+      restaurant: "Steak Master",
+      distance: "15min away",
+      deliveryTime: "15min",
     },
     {
       id: "main3",
@@ -60,6 +69,9 @@ export default function MenuScreen() {
       price: 150,
       image: require("../../assets/images/Main-Images/images.jpg"),
       category: "Mains",
+      restaurant: "Fine Dining",
+      distance: "20min away",
+      deliveryTime: "20min",
     },
     // Starter Items
     {
@@ -69,6 +81,9 @@ export default function MenuScreen() {
       price: 65,
       image: require("../../assets/images/Starters-Images/download.jpg"),
       category: "Starters",
+      restaurant: "Asian Fusion",
+      distance: "8min away",
+      deliveryTime: "8min",
     },
     {
       id: "starter2",
@@ -77,6 +92,9 @@ export default function MenuScreen() {
       price: 45,
       image: require("../../assets/images/Starters-Images/download (2).jpg"),
       category: "Starters",
+      restaurant: "Italian Corner",
+      distance: "10min away",
+      deliveryTime: "10min",
     },
     {
       id: "starter3",
@@ -85,6 +103,9 @@ export default function MenuScreen() {
       price: 55,
       image: require("../../assets/images/Starters-Images/images.jpg"),
       category: "Starters",
+      restaurant: "Healthy Bites",
+      distance: "12min away",
+      deliveryTime: "12min",
     },
     {
       id: "starter4",
@@ -93,6 +114,9 @@ export default function MenuScreen() {
       price: 50,
       image: require("../../assets/images/Starters-Images/images (1).jpg"),
       category: "Starters",
+      restaurant: "Soup Kitchen",
+      distance: "7min away",
+      deliveryTime: "7min",
     },
     // Dessert Items
     {
@@ -102,6 +126,9 @@ export default function MenuScreen() {
       price: 45,
       image: require("../../assets/images/Dessert-Images/chocolate cake.jpg"),
       category: "Desserts",
+      restaurant: "KFC (Small Street)",
+      distance: "5min away",
+      deliveryTime: "5min",
     },
     {
       id: "dessert2",
@@ -110,6 +137,9 @@ export default function MenuScreen() {
       price: 55,
       image: require("../../assets/images/Dessert-Images/cakes.jpg"),
       category: "Desserts",
+      restaurant: "Sweet Treats",
+      distance: "8min away",
+      deliveryTime: "8min",
     },
     {
       id: "dessert3",
@@ -118,6 +148,9 @@ export default function MenuScreen() {
       price: 35,
       image: require("../../assets/images/Dessert-Images/ice cream with chocolate.jpg"),
       category: "Desserts",
+      restaurant: "KFC (Small Street)",
+      distance: "5min away",
+      deliveryTime: "5min",
     },
     {
       id: "dessert4",
@@ -126,6 +159,9 @@ export default function MenuScreen() {
       price: 40,
       image: require("../../assets/images/Dessert-Images/carrot and ice cream cake.jpg"),
       category: "Desserts",
+      restaurant: "Bakery House",
+      distance: "10min away",
+      deliveryTime: "10min",
     },
     {
       id: "dessert5",
@@ -134,6 +170,9 @@ export default function MenuScreen() {
       price: 50,
       image: require("../../assets/images/Dessert-Images/vanilla cake.jpg"),
       category: "Desserts",
+      restaurant: "Cake Palace",
+      distance: "12min away",
+      deliveryTime: "12min",
     },
     // Beverage Items
     {
@@ -143,6 +182,9 @@ export default function MenuScreen() {
       price: 25,
       image: require("../../assets/images/Beverage-Images/juice 100%.jpg"),
       category: "Beverages",
+      restaurant: "Juice Bar",
+      distance: "5min away",
+      deliveryTime: "5min",
     },
     {
       id: "beverage2",
@@ -151,6 +193,9 @@ export default function MenuScreen() {
       price: 30,
       image: require("../../assets/images/Beverage-Images/coffee.jpg"),
       category: "Beverages",
+      restaurant: "Coffee House",
+      distance: "6min away",
+      deliveryTime: "6min",
     },
     {
       id: "beverage3",
@@ -159,6 +204,9 @@ export default function MenuScreen() {
       price: 28,
       image: require("../../assets/images/Beverage-Images/iced cappucino.jpg"),
       category: "Beverages",
+      restaurant: "Bean Town",
+      distance: "10min away",
+      deliveryTime: "10min",
     },
     {
       id: "beverage4",
@@ -167,6 +215,9 @@ export default function MenuScreen() {
       price: 35,
       image: require("../../assets/images/Beverage-Images/juice.jpg"),
       category: "Beverages",
+      restaurant: "Fresh Squeezed",
+      distance: "8min away",
+      deliveryTime: "8min",
     },
     {
       id: "beverage5",
@@ -175,6 +226,9 @@ export default function MenuScreen() {
       price: 20,
       image: require("../../assets/images/Beverage-Images/drinks.jpg"),
       category: "Beverages",
+      restaurant: "Drink Station",
+      distance: "12min away",
+      deliveryTime: "12min",
     },
     // Burger Items
     {
@@ -184,6 +238,9 @@ export default function MenuScreen() {
       price: 85,
       image: require("../../assets/images/Burger-Images/images.jpg"),
       category: "Burgers",
+      restaurant: "Burger Barn",
+      distance: "8min away",
+      deliveryTime: "8min",
     },
     {
       id: "burger2",
@@ -192,6 +249,9 @@ export default function MenuScreen() {
       price: 95,
       image: require("../../assets/images/Burger-Images/images (1).jpg"),
       category: "Burgers",
+      restaurant: "Burger Palace",
+      distance: "10min away",
+      deliveryTime: "10min",
     },
     {
       id: "burger3",
@@ -200,6 +260,9 @@ export default function MenuScreen() {
       price: 105,
       image: require("../../assets/images/Burger-Images/images (2).jpg"),
       category: "Burgers",
+      restaurant: "Burger King",
+      distance: "12min away",
+      deliveryTime: "12min",
     },
     // Alcohol Items
     {
@@ -209,6 +272,9 @@ export default function MenuScreen() {
       price: 65,
       image: require("../../assets/images/Main-Images/download.jpg"),
       category: "Alcohol",
+      restaurant: "Wine Cellar",
+      distance: "15min away",
+      deliveryTime: "15min",
     },
     {
       id: "alcohol2",
@@ -217,6 +283,9 @@ export default function MenuScreen() {
       price: 60,
       image: require("../../assets/images/Main-Images/download (1).jpg"),
       category: "Alcohol",
+      restaurant: "Wine Cellar",
+      distance: "15min away",
+      deliveryTime: "15min",
     },
     {
       id: "alcohol3",
@@ -225,6 +294,9 @@ export default function MenuScreen() {
       price: 45,
       image: require("../../assets/images/Main-Images/images.jpg"),
       category: "Alcohol",
+      restaurant: "Beer Garden",
+      distance: "12min away",
+      deliveryTime: "12min",
     },
   ];
 
@@ -308,9 +380,18 @@ export default function MenuScreen() {
               />
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.restaurantName}>{item.restaurant}</Text>
                 <Text style={styles.itemDescription} numberOfLines={2}>
                   {item.description}
                 </Text>
+                <View style={styles.locationInfo}>
+                  <IconSymbol name="location" size={14} color="#6b7280" />
+                  <Text style={styles.distance}>{item.distance}</Text>
+                  <Text style={styles.deliveryTime}>
+                    {" "}
+                    • {item.deliveryTime}
+                  </Text>
+                </View>
                 <View style={styles.itemFooter}>
                   <Text style={styles.itemPrice}>R{item.price}</Text>
                   <TouchableOpacity
@@ -382,13 +463,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#11181C",
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  restaurantName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#10b981",
+    marginBottom: 6,
   },
   itemDescription: {
     fontSize: 14,
     color: "#6b7280",
-    marginBottom: 12,
+    marginBottom: 8,
     lineHeight: 20,
+  },
+  locationInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  distance: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginLeft: 4,
+  },
+  deliveryTime: {
+    fontSize: 12,
+    color: "#10b981",
   },
   itemFooter: {
     flexDirection: "row",
