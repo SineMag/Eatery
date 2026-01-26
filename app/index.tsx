@@ -83,21 +83,21 @@ export default function HomeScreen() {
         name: "The Grill House",
         cuisine: "Steakhouse",
         rating: 4.5,
-        image: require("../assets/images/Main-Images/download.jpg"),
+        image: require("../assets/images/main-dish.jpg"),
       },
       {
         id: "2",
         name: "Pasta Paradise",
         cuisine: "Italian",
         rating: 4.2,
-        image: require("../assets/images/Main-Images/download (1).jpg"),
+        image: require("../assets/images/main-dish2.jpg"),
       },
       {
         id: "3",
         name: "Sushi Master",
         cuisine: "Japanese",
         rating: 4.8,
-        image: require("../assets/images/Main-Images/images.jpg"),
+        image: require("../assets/images/main-dish3.jpg"),
       },
     ]);
 
@@ -110,7 +110,7 @@ export default function HomeScreen() {
         lastVisited: "2 days ago",
         cuisine: "Steakhouse",
         rating: 4.5,
-        image: require("../assets/images/Main-Images/download.jpg"),
+        image: require("../assets/images/main-dish.jpg"),
       },
       {
         id: "2",
@@ -119,7 +119,7 @@ export default function HomeScreen() {
         lastVisited: "1 week ago",
         cuisine: "American",
         rating: 4.0,
-        image: require("../assets/images/Burger-Images/images.jpg"),
+        image: require("../assets/images/burger.jpg"),
       },
       {
         id: "3",
@@ -128,7 +128,7 @@ export default function HomeScreen() {
         lastVisited: "2 weeks ago",
         cuisine: "Mexican",
         rating: 4.3,
-        image: require("../assets/images/Burger-Images/images (1).jpg"),
+        image: require("../assets/images/burger2.jpg"),
       },
     ]);
   };

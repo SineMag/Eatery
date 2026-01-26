@@ -48,3 +48,23 @@ user can click on the card on Catergories, to show menus and restuarants serving
 
 -- not registered or logged in?/
 - no problem, user can still browse the menue from resturants but cannot place an order
+
+
+
+
+IMAGES
+
+Create a new Git repository, add your
+  images to a dedicated folder (e.g., images/), then commit and push.
+  3) Deploy this repository as a Static Site on Render.com,
+  configuring the root and publish directories appropriately. 4
+  Obtain the direct public URL for each image from your deployed
+  Render site (e.g., https://your-site-name.onrender.com/burger.jpg).
+  5) Finally, update the imageUrl field in each Firestore FoodItem
+  document with these Render URLs.
+
+  Once you have compiled a mapping of your FoodItem.id to its
+  corresponding Render.com image URL (e.g., {"main1":
+  "https://my-eatery-images.onrender.com/grilled-chicken.jpg"}), I
+  can generate a Firebase Admin SDK script to automate the Firestore
+  imageUrl updates. Let me know when you're ready with this mapping.
