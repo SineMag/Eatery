@@ -1,3 +1,5 @@
+<img src="https://socialify.git.ci/SineMag/Eatery/image?language=1&owner=1&name=1&stargazers=1&theme=Light" alt="Eatery" width="640" height="320" />
+
 # Eatery - React Native Restaurant App
 
 A modern React Native restaurant ordering application built with Expo, Firebase, and TypeScript. Features include user authentication, menu browsing, cart management, and order tracking.
@@ -5,6 +7,7 @@ A modern React Native restaurant ordering application built with Expo, Firebase,
 ## 🚀 Features
 
 ### User Features
+
 - **Authentication**: Email/password registration and login with Firebase
 - **Menu Browsing**: Browse food items by categories (Mains, Starters, Desserts, Beverages, Alcohol, Burgers)
 - **Item Customization**: Select sides, drinks, extras, and ingredient preferences
@@ -14,6 +17,7 @@ A modern React Native restaurant ordering application built with Expo, Firebase,
 - **Profile Management**: Update personal information and payment methods
 
 ### Admin Features (Planned)
+
 - **Dashboard**: Manage food items and categories
 - **Order Management**: View and process orders
 - **Analytics**: Sales data and customer insights
@@ -32,11 +36,13 @@ A modern React Native restaurant ordering application built with Expo, Firebase,
 ## 📱 Screens
 
 ### Authentication
+
 - Login screen with email/password
 - Registration with full profile details
 - Profile management and updates
 
 ### Main App
+
 - **Home**: Category grid navigation
 - **Menu**: Category-specific food items
 - **Item Detail**: Customization options and add to cart
@@ -56,6 +62,7 @@ A modern React Native restaurant ordering application built with Expo, Firebase,
 ## 🔧 Setup
 
 ### Prerequisites
+
 - Node.js (v18 or higher)
 - Expo CLI
 - Firebase project setup
@@ -63,35 +70,57 @@ A modern React Native restaurant ordering application built with Expo, Firebase,
 ### Installation
 
 1. Clone the repository
+
 ```bash
 git clone https://github.com/SineMag/Eatery.git
 cd Eatery
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 ```
 
+## OR
+
+```bash
+yarn install
+```
+
 3. Set up Firebase
-   - Create a new Firebase project
-   - Enable Authentication (Email/Password)
-   - Set up Firestore database
-   - Copy your Firebase configuration
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Click "Add project" and create a new project
+   - Enable Authentication:
+     - Go to Authentication → Sign-in method
+     - Enable "Email/Password" provider
+   - Set up Firestore Database:
+     - Go to Firestore Database → Create database
+     - Choose "Start in test mode" for development
+     - Select a location (preferably close to your users)
+   - Get your Firebase configuration:
+     - Go to Project Settings → General → Your apps
+     - Copy the Firebase config object
 
 4. Configure environment variables
-   - Copy `.env.example` to `.env`
-   - Add your Firebase credentials:
+   - Copy `.env.example` to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Add your Firebase credentials to `.env`:
      ```
      EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key
      EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+     EXPO_PUBLIC_FIREBASE_DATABASE_URL=https://your_project-default-rtdb.firebaseio.com
      EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
      EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
      EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
      EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
      ```
+   - Replace the placeholder values with your actual Firebase config
 
 5. Start the development server
+
 ```bash
 npm start
 ```
@@ -115,12 +144,14 @@ npm start
 ## 🚀 Deployment
 
 ### Expo Build
+
 ```bash
 expo build:android
 expo build:ios
 ```
 
 ### Web Deployment
+
 ```bash
 expo build:web
 ```
@@ -128,6 +159,7 @@ expo build:web
 ## 📊 Database Schema
 
 ### Users Collection
+
 ```typescript
 {
   uid: string,
@@ -143,6 +175,7 @@ expo build:web
 ```
 
 ### Orders Collection
+
 ```typescript
 {
   id: string,
@@ -158,6 +191,7 @@ expo build:web
 ```
 
 ### Food Items Collection
+
 ```typescript
 {
   id: string,
