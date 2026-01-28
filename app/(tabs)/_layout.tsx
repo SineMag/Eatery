@@ -15,7 +15,6 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarStyle: { display: "none" },
       }}
     >
       <Tabs.Screen
@@ -35,7 +34,6 @@ export default function TabLayout() {
               color={color}
             />
           ),
-          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen
@@ -45,7 +43,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="list.bullet.rectangle" color={color} />
           ),
-          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen
@@ -59,7 +56,6 @@ export default function TabLayout() {
               color={color}
             />
           ),
-          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen
@@ -69,7 +65,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="gearshape.fill" color={color} />
           ),
-          tabBarStyle: { display: "none" },
         }}
       />
     </Tabs>

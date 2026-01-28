@@ -1,7 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/utils/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -10,116 +10,62 @@ import {
   View,
 } from "react-native";
 
-const mockOrderDetails = {
-  "1": {
-    id: "1",
-    status: "delivered" as const,
-    total: 25.98,
-    deliveryAddress: "123 Main St, City, State 12345",
-    paymentMethod: "Visa •••• 4242",
-    createdAt: new Date("2024-01-20T12:30:00"),
-    updatedAt: new Date("2024-01-20T13:45:00"),
-    items: [
-      {
-        name: "Classic Burger",
-        quantity: 2,
-        price: 12.99,
-        customizations: {
-          sides: ["Chips"],
-          drinks: ["Coke"],
-          extras: ["Extra Cheese"],
-        },
-      },
-      {
-        name: "Coke",
-        quantity: 2,
-        price: 2.5,
-        customizations: {},
-      },
-    ],
-  },
-  "2": {
-    id: "2",
-    status: "confirmed" as const,
-    total: 18.48,
-    deliveryAddress: "456 Oak Ave, City, State 67890",
-    paymentMethod: "Mastercard •••• 5555",
-    createdAt: new Date("2024-01-21T19:15:00"),
-    updatedAt: new Date("2024-01-21T19:20:00"),
-    items: [
-      {
-        name: "Caesar Salad",
-        quantity: 1,
-        price: 8.99,
-        customizations: {},
-      },
-      {
-        name: "Chocolate Cake",
-        quantity: 1,
-        price: 6.99,
-        customizations: {},
-      },
-      {
-        name: "Water",
-        quantity: 1,
-        price: 1.5,
-        customizations: {},
-      },
-    ],
-  },
-};
-
 export default function OrderDetailScreen() {
   const router = useRouter();
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
-  const { user } = useAuth();
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const order = mockOrderDetails[orderId];
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!orderId) return;
 
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <IconSymbol name="hand.point.up.left" size={24} color="#11181C" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Order Details</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <View style={styles.notLoggedIn}>
-          <IconSymbol name="hand.thumbsup.fill" size={48} color="#9ca3af" />
-          <Text style={styles.notLoggedInText}>
-            Please login to view order details
-          </Text>
-        </View>
-      </View>
-    );
-  }
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select(
+            `
+            id,
+            total,
+            status,
+            delivery_address,
+            payment_method,
+            created_at,
+            updated_at,
+            order_items (
+              id,
+              quantity,
+              subtotal,
+              selected_sides,
+              selected_drinks,
+              selected_extras,
+              food_items (
+                id,
+                name,
+                price,
+                description
+              )
+            )
+          `
+          )
+          .eq("id", orderId)
+          .single();
 
-  if (!order) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <IconSymbol name="hand.point.up.left" size={24} color="#11181C" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Order Details</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <View style={styles.notFound}>
-          <IconSymbol
-            name="exclamationmark.triangle"
-            size={48}
-            color="#ef4444"
-          />
-          <Text style={styles.notFoundText}>Order not found</Text>
-        </View>
-      </View>
-    );
-  }
+        if (error) throw error;
+        setOrder(data);
+      } catch (error) {
+        console.error("Error fetching order:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "pending":
       case "confirmed":
       case "preparing":
         return "#f59e0b";
@@ -136,6 +82,8 @@ export default function OrderDetailScreen() {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case "pending":
+        return "Pending";
       case "confirmed":
         return "Order Confirmed";
       case "preparing":
@@ -151,29 +99,66 @@ export default function OrderDetailScreen() {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <IconSymbol name="chevron.left" size={24} color="#11181C" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Order Details</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text>Loading order details...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!order) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <IconSymbol name="chevron.left" size={24} color="#11181C" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Order Details</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={{ color: "#ef4444" }}>Order not found</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <IconSymbol name="hand.point.right" size={20} color="#9ca3af" />
+          <IconSymbol name="chevron.left" size={24} color="#11181C" />
         </TouchableOpacity>
-        <Text style={styles.title}>Order #{order.id}</Text>
+        <Text style={styles.title}>Order Details</Text>
         <View style={{ width: 24 }} />
       </View>
 
       {/* Order Status */}
       <View style={styles.section}>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(order.status) },
-          ]}
-        >
-          <Text style={styles.statusText}>{getStatusText(order.status)}</Text>
+        <View style={styles.statusContainer}>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: getStatusColor(order.status) },
+            ]}
+          >
+            <Text style={styles.statusText}>{getStatusText(order.status)}</Text>
+          </View>
+          <Text style={styles.orderId}>Order #{order.id.slice(0, 8)}</Text>
         </View>
         <Text style={styles.orderDate}>
-          Placed on {order.createdAt.toLocaleDateString()} at{" "}
-          {order.createdAt.toLocaleTimeString([], {
+          {new Date(order.created_at).toLocaleDateString()} at{" "}
+          {new Date(order.created_at).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}
@@ -183,43 +168,47 @@ export default function OrderDetailScreen() {
       {/* Order Items */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Order Items</Text>
-        {order.items.map((item, index) => (
-          <View key={index} style={styles.orderItem}>
+        {order.order_items?.map((item: any, index: number) => (
+          <View key={index} style={styles.itemRow}>
             <View style={styles.itemInfo}>
-              <Text style={styles.itemPrice}>R{item.price.toFixed(2)}</Text>
-              <Text style={styles.itemQuantity}>x{item.quantity}</Text>
+              <Text style={styles.itemName}>{item.food_items?.name}</Text>
+              <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
+              {item.selected_sides && item.selected_sides.length > 0 && (
+                <Text style={styles.customization}>
+                  Sides: {item.selected_sides.map((s: any) => s.name).join(", ")}
+                </Text>
+              )}
+              {item.selected_drinks && item.selected_drinks.length > 0 && (
+                <Text style={styles.customization}>
+                  Drinks: {item.selected_drinks.map((d: any) => d.name).join(", ")}
+                </Text>
+              )}
+              {item.selected_extras && item.selected_extras.length > 0 && (
+                <Text style={styles.customization}>
+                  Extras: {item.selected_extras.map((e: any) => e.name).join(", ")}
+                </Text>
+              )}
             </View>
-            <Text style={styles.itemPrice}>
-              R{(item.price * item.quantity).toFixed(2)}
-            </Text>
+            <Text style={styles.itemPrice}>R{item.subtotal.toFixed(2)}</Text>
           </View>
         ))}
-        <View style={styles.itemsTotal}>
-          <Text style={styles.itemsTotalLabel}>Items Total:</Text>
-          <Text style={styles.itemsTotalValue}>
-            R
-            {order.items
-              .reduce((sum, item) => sum + item.price * item.quantity, 0)
-              .toFixed(2)}
-          </Text>
+      </View>
+
+      {/* Delivery Address */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Delivery Address</Text>
+        <View style={styles.addressBox}>
+          <IconSymbol name="location.fill" size={20} color="#11181C" />
+          <Text style={styles.addressText}>{order.delivery_address}</Text>
         </View>
       </View>
 
-      {/* Delivery Information */}
+      {/* Payment Method */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Delivery Information</Text>
-        <View style={styles.infoRow}>
-          <IconSymbol name="location" size={20} color="#6b7280" />
-          <Text style={styles.infoText}>{order.deliveryAddress}</Text>
-        </View>
-      </View>
-
-      {/* Payment Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Payment Information</Text>
-        <View style={styles.infoRow}>
-          <IconSymbol name="creditcard" size={20} color="#6b7280" />
-          <Text style={styles.infoText}>{order.paymentMethod}</Text>
+        <Text style={styles.sectionTitle}>Payment Method</Text>
+        <View style={styles.paymentBox}>
+          <IconSymbol name="creditcard" size={20} color="#11181C" />
+          <Text style={styles.paymentText}>{order.payment_method}</Text>
         </View>
       </View>
 
@@ -229,7 +218,7 @@ export default function OrderDetailScreen() {
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Subtotal:</Text>
           <Text style={styles.summaryValue}>
-            R{(order.total - 2.99 - order.total * 0.1).toFixed(2)}
+            R{(order.total * 0.9).toFixed(2)}
           </Text>
         </View>
         <View style={styles.summaryRow}>
@@ -248,26 +237,24 @@ export default function OrderDetailScreen() {
         </View>
       </View>
 
-      {/* Actions */}
-      <View style={styles.actions}>
-        {order.status === "delivered" && (
-          <TouchableOpacity style={styles.actionButton}>
-            <IconSymbol name="star" size={20} color="#11181C" />
-            <Text style={styles.actionButtonText}>Rate Order</Text>
+      {/* Action Buttons */}
+      {order.status !== "delivered" && order.status !== "cancelled" && (
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.trackButton}>
+            <IconSymbol name="location.fill" size={16} color="#fff" />
+            <Text style={styles.trackButtonText}>Track Order</Text>
           </TouchableOpacity>
-        )}
-        <TouchableOpacity style={styles.actionButton}>
-          <IconSymbol name="phone" size={20} color="#11181C" />
-          <Text style={styles.actionButtonText}>Contact Support</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push("/(tabs)")}
-        >
-          <IconSymbol name="hand.thumbsup.fill" size={20} color="#11181C" />
-          <Text style={styles.actionButtonText}>Order Again</Text>
-        </TouchableOpacity>
-      </View>
+        </View>
+      )}
+
+      {order.status === "delivered" && (
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.rateButton}>
+            <IconSymbol name="star.fill" size={16} color="#fff" />
+            <Text style={styles.rateButtonText}>Rate Order</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -290,27 +277,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#11181C",
   },
-  notLoggedIn: {
+  loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 64,
-  },
-  notLoggedInText: {
-    fontSize: 16,
-    color: "#9ca3af",
-    marginTop: 16,
-  },
-  notFound: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 64,
-  },
-  notFoundText: {
-    fontSize: 16,
-    color: "#ef4444",
-    marginTop: 16,
   },
   section: {
     padding: 16,
@@ -321,29 +292,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#11181C",
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  statusContainer: {
+    marginBottom: 12,
   },
   statusBadge: {
-    alignSelf: "flex-start",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
+    alignSelf: "flex-start",
     marginBottom: 8,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
     color: "#fff",
+  },
+  orderId: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#11181C",
   },
   orderDate: {
     fontSize: 14,
     color: "#6b7280",
   },
-  orderItem: {
+  itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
   },
   itemInfo: {
     flex: 1,
@@ -352,72 +333,76 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     color: "#11181C",
+    marginBottom: 4,
   },
   itemQuantity: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#6b7280",
-    marginTop: 2,
+    marginBottom: 2,
+  },
+  customization: {
+    fontSize: 11,
+    color: "#9ca3af",
+    marginBottom: 2,
   },
   itemPrice: {
     fontSize: 16,
     fontWeight: "600",
     color: "#11181C",
   },
-  itemsTotal: {
+  addressBox: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    marginTop: 8,
+    alignItems: "flex-start",
+    padding: 12,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    gap: 12,
   },
-  itemsTotalLabel: {
-    fontSize: 16,
-    fontWeight: "600",
+  addressText: {
+    flex: 1,
+    fontSize: 14,
     color: "#11181C",
+    lineHeight: 20,
   },
-  itemsTotalValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#11181C",
-  },
-  infoRow: {
+  paymentBox: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 12,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    gap: 12,
   },
-  infoText: {
-    fontSize: 16,
+  paymentText: {
+    fontSize: 14,
     color: "#11181C",
-    marginLeft: 12,
   },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 8,
   },
   summaryLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#6b7280",
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
     color: "#11181C",
   },
   totalRow: {
+    marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
+    borderTopColor: "#e5e5e5",
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     color: "#11181C",
   },
   totalValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#11181C",
   },
@@ -425,19 +410,32 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
-  actionButton: {
+  trackButton: {
     flexDirection: "row",
+    backgroundColor: "#3b82f6",
+    paddingVertical: 14,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-    borderRadius: 8,
+    gap: 8,
   },
-  actionButtonText: {
+  trackButtonText: {
+    color: "#fff",
     fontSize: 16,
-    fontWeight: "500",
-    color: "#11181C",
-    marginLeft: 8,
+    fontWeight: "600",
+  },
+  rateButton: {
+    flexDirection: "row",
+    backgroundColor: "#f59e0b",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  rateButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

@@ -1,9 +1,7 @@
 import LayoutWrapper from "@/components/layout-wrapper";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
-import { auth } from "@/utils/firebase";
+import { useAuth } from "@/hooks";
 import { useRouter } from "expo-router";
-import { deleteUser } from "firebase/auth";
 import React from "react";
 import {
   Alert,
@@ -15,23 +13,23 @@ import {
 } from "react-native";
 
 export default function SettingsScreen() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const router = useRouter();
   const [signingOut, setSigningOut] = React.useState(false);
 
   const handleSignOut = async () => {
-    if (loading || signingOut) return; // Prevent sign out during auth state changes or multiple clicks
+    if (loading || signingOut) return;
 
-    console.log("Sign Out button pressed");
     setSigningOut(true);
     try {
-      console.log("Attempting to sign out...");
-      await auth.signOut();
-      console.log("Sign out successful");
+      const { error } = await signOut();
+
+      if (error) {
+        throw error;
+      }
 
       // Add a small delay to ensure auth state has propagated
       setTimeout(() => {
-        // Navigate to main home screen for login/register options
         router.replace("/");
       }, 100);
     } catch (error: any) {
@@ -42,7 +40,6 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    console.log("About to show Alert dialog");
     Alert.alert(
       "Delete Account",
       "This action cannot be undone. All your data will be permanently deleted. Are you sure?",
@@ -53,9 +50,11 @@ export default function SettingsScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteUser(auth.currentUser!);
-              Alert.alert("Success", "Account deleted successfully");
-              router.replace("/");
+              // Account deletion will be implemented when needed
+              Alert.alert(
+                "Info",
+                "Please contact support to delete your account.",
+              );
             } catch (error: any) {
               Alert.alert("Error", error.message);
             }
@@ -87,6 +86,26 @@ export default function SettingsScreen() {
   return (
     <LayoutWrapper title="Settings" showBottomNavigation={true}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Admin Section - Only visible to admins */}
+        {isAdmin && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Admin</Text>
+
+            <TouchableOpacity
+              style={[styles.settingItem, styles.adminItem]}
+              onPress={() => router.push("/admin/dashboard")}
+            >
+              <View style={styles.settingLeft}>
+                <IconSymbol name="chart.bar.fill" size={24} color="#3b82f6" />
+                <Text style={[styles.settingText, styles.adminText]}>
+                  Admin Dashboard
+                </Text>
+              </View>
+              <IconSymbol name="chevron.right" size={16} color="#3b82f6" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
 
@@ -241,5 +260,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#fef2f2",
     borderLeftWidth: 4,
     borderLeftColor: "#ef4444",
+  },
+  adminItem: {
+    backgroundColor: "#eff6ff",
+    borderLeftWidth: 4,
+    borderLeftColor: "#3b82f6",
+  },
+  adminText: {
+    color: "#3b82f6",
+    fontWeight: "600",
   },
 });

@@ -1,7 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useAuth } from "@/hooks";
+import { supabase } from "@/utils/supabase";
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useState, useCallback } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -10,36 +11,59 @@ import {
   View,
 } from "react-native";
 
-const mockOrders = [
-  {
-    id: "1",
-    status: "delivered" as const,
-    total: 25.98,
-    createdAt: new Date("2024-01-20T12:30:00"),
-    items: [
-      { name: "Classic Burger", quantity: 2, price: 12.99 },
-      { name: "Coke", quantity: 2, price: 2.5 },
-    ],
-  },
-  {
-    id: "2",
-    status: "confirmed" as const,
-    total: 18.48,
-    createdAt: new Date("2024-01-21T19:15:00"),
-    items: [
-      { name: "Caesar Salad", quantity: 1, price: 8.99 },
-      { name: "Chocolate Cake", quantity: 1, price: 6.99 },
-      { name: "Water", quantity: 1, price: 1.5 },
-    ],
-  },
-];
-
 export default function OrdersScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState<
     "all" | "pending" | "completed"
   >("all");
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchOrders = useCallback(async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          `
+          id,
+          total,
+          status,
+          delivery_address,
+          payment_method,
+          created_at,
+          order_items (
+            id,
+            quantity,
+            subtotal,
+            food_items (
+              id,
+              name,
+              price
+            )
+          )
+        `
+        )
+        .eq("user_id", user.uid)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setOrders(data || []);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders();
+    }, [fetchOrders])
+  );
 
   if (!user) {
     return (
@@ -63,16 +87,17 @@ export default function OrdersScreen() {
     );
   }
 
-  const filteredOrders = mockOrders.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     if (selectedFilter === "all") return true;
     if (selectedFilter === "pending")
-      return order.status === "confirmed" || order.status === "preparing";
+      return order.status === "confirmed" || order.status === "preparing" || order.status === "pending";
     if (selectedFilter === "completed") return order.status === "delivered";
     return true;
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "pending":
       case "confirmed":
       case "preparing":
         return "#f59e0b";
@@ -89,6 +114,8 @@ export default function OrdersScreen() {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case "pending":
+        return "Pending";
       case "confirmed":
         return "Order Confirmed";
       case "preparing":
@@ -134,7 +161,11 @@ export default function OrdersScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {filteredOrders.length === 0 ? (
+        {loading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Loading orders...</Text>
+          </View>
+        ) : filteredOrders.length === 0 ? (
           <View style={styles.emptyState}>
             <IconSymbol name="list.bullet" size={48} color="#9ca3af" />
             <Text style={styles.emptyText}>No orders found</Text>
@@ -154,10 +185,10 @@ export default function OrdersScreen() {
             >
               <View style={styles.orderHeader}>
                 <View>
-                  <Text style={styles.orderId}>Order #{order.id}</Text>
+                  <Text style={styles.orderId}>Order #{order.id.slice(0, 8)}</Text>
                   <Text style={styles.orderDate}>
-                    {order.createdAt.toLocaleDateString()} at{" "}
-                    {order.createdAt.toLocaleTimeString([], {
+                    {new Date(order.created_at).toLocaleDateString()} at{" "}
+                    {new Date(order.created_at).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -176,14 +207,14 @@ export default function OrdersScreen() {
               </View>
 
               <View style={styles.orderItems}>
-                {order.items.slice(0, 2).map((item, index) => (
+                {order.order_items?.slice(0, 2).map((item: any, index: number) => (
                   <Text key={index} style={styles.itemText}>
-                    {item.quantity}x {item.name}
+                    {item.quantity}x {item.food_items?.name || "Item"}
                   </Text>
                 ))}
-                {order.items.length > 2 && (
+                {order.order_items?.length > 2 && (
                   <Text style={styles.moreItemsText}>
-                    +{order.items.length - 2} more items
+                    +{order.order_items.length - 2} more items
                   </Text>
                 )}
               </View>

@@ -22,15 +22,12 @@ export default function LayoutWrapper({
   // Don't show header and bottom navigation on payment screen
   const isPaymentScreen = pathname === "/payment";
 
-  // Don't show bottom navigation on auth screens
+  // Don't show bottom navigation on auth screens only
   const isAuthScreen = pathname.startsWith("/auth");
-
-  // Don't show bottom navigation on menu screens (they have their own)
-  const isMenuScreen = pathname.startsWith("/menu");
 
   const shouldShowHeader = !isPaymentScreen;
   const shouldShowBottomNav =
-    showBottomNavigation && !isPaymentScreen && !isAuthScreen && !isMenuScreen;
+    showBottomNavigation && !isPaymentScreen && !isAuthScreen;
 
   return (
     <View style={styles.container}>

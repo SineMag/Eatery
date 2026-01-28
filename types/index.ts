@@ -12,6 +12,7 @@ export interface FoodItem {
   imageUrl: string;
   categoryId: string;
   restaurant: string; // Added
+  restaurantId: string; // Added
   distance: string; // Added
   deliveryTime: string; // Added
   sides?: Option[];
@@ -48,6 +49,7 @@ export interface User {
   contactNumber: string;
   address: string;
   profileImage?: string;
+  role: "user" | "admin";
   cardDetails?: CardDetails;
 }
 

@@ -1,63 +1,98 @@
 <img src="https://socialify.git.ci/SineMag/Eatery/image?language=1&owner=1&name=1&stargazers=1&theme=Light" alt="Eatery" width="640" height="320" />
 
+--- 
+
 # Eatery - React Native Restaurant App
 
-A modern React Native restaurant ordering application built with Expo, Firebase, and TypeScript. Features include user authentication, menu browsing, cart management, and order tracking.
+A modern React Native restaurant ordering application built with Expo, Supabase, and TypeScript. Features include user authentication, menu browsing, cart management, order tracking, and an admin dashboard.
 
 ## 🚀 Features
 
 ### User Features
 
-- **Authentication**: Email/password registration and login with Firebase
+- **Authentication**: Email/password registration and login with Supabase
 - **Menu Browsing**: Browse food items by categories (Mains, Starters, Desserts, Beverages, Alcohol, Burgers)
 - **Item Customization**: Select sides, drinks, extras, and ingredient preferences
 - **Cart Management**: Add/remove items, update quantities, clear cart
 - **Checkout**: Select delivery address and payment method
-- **Order History**: View and track order status
+- **Order History**: View and track order status with real-time updates
 - **Profile Management**: Update personal information and payment methods
+- **Order Tracking**: View detailed order information and status
 
-### Admin Features (Planned)
+### Admin Features
 
-- **Dashboard**: Manage food items and categories
-- **Order Management**: View and process orders
-- **Analytics**: Sales data and customer insights
+- **Dashboard**: Comprehensive analytics and metrics
+- **Revenue Analytics**: Charts showing revenue by day and top-selling items
+- **Order Management**: View and manage all orders
+- **Food Item Management**: Add, edit, and delete food items
+- **Restaurant Settings**: Manage restaurant information
+- **Order Status Distribution**: Visual representation of order statuses
 
 ## 🛠 Tech Stack
 
 - **Frontend**: React Native with Expo
 - **Navigation**: Expo Router
-- **Backend**: Firebase (Authentication, Firestore)
+- **Backend**: Supabase (PostgreSQL, Authentication, Real-time)
 - **State Management**: React Context (Auth, Cart)
 - **UI Components**: Expo Symbols, Custom components
 - **Styling**: React Native StyleSheet with dark/light theme support
 - **Icons**: Expo Symbols (SF Symbols)
 - **TypeScript**: Full type safety
+- **Database**: PostgreSQL with Supabase
 
 ## 📱 Screens
 
 ### Authentication
 
-- Login screen with email/password
-- Registration with full profile details
-- Profile management and updates
+- **Login**: Email/password authentication
+- **Register**: Full profile setup with contact details
+- **Profile**: User information management and updates
 
 ### Main App
 
-- **Home**: Category grid navigation
-- **Menu**: Category-specific food items
+- **Home**: Category grid navigation and personalized recommendations
+- **Menu**: Category-specific food items with filtering
 - **Item Detail**: Customization options and add to cart
 - **Cart**: Item management and checkout
 - **Checkout**: Address and payment selection
 - **Orders**: Order history with status tracking
+- **Order Detail**: Detailed order information
 - **Profile**: User information and settings
+
+### Admin
+
+- **Dashboard**: Analytics overview
+- **Orders**: Order management
+- **Items**: Food item management
+- **Settings**: Restaurant configuration
 
 ## 🎨 Design
 
-- **Color Scheme**: Dark grey, black, and white
-- **Icons**: React Icons (SF Symbols via Expo Symbols)
-- **Typography**: Clean, modern font hierarchy
-- **Layout**: Card-based design with proper spacing
-- **Responsive**: Optimized for various screen sizes
+### Color Scheme
+
+- **Primary**: #11181C (Dark Grey/Black)
+- **Secondary**: #6b7280 (Medium Grey)
+- **Accent**: #3b82f6 (Blue)
+- **Success**: #10b981 (Green)
+- **Warning**: #f59e0b (Amber)
+- **Error**: #ef4444 (Red)
+- **Background**: #f9fafb (Light Grey)
+- **Border**: #e5e5e5 (Light Border)
+
+### Typography
+
+- **Headings**: 24px, Bold (700)
+- **Section Titles**: 18px, Semi-bold (600)
+- **Body**: 14-16px, Regular (400-500)
+- **Small**: 12px, Regular (400)
+
+### Layout
+
+- **Card-based design** with proper spacing
+- **Responsive** for various screen sizes
+- **Bottom navigation** for main tabs
+- **Horizontal scrolling** for categories and restaurants
+- **Grid layout** for menu items
 
 ## 🔧 Setup
 
@@ -65,7 +100,7 @@ A modern React Native restaurant ordering application built with Expo, Firebase,
 
 - Node.js (v18 or higher)
 - Expo CLI
-- Firebase project setup
+- Supabase account
 
 ### Installation
 
@@ -82,42 +117,22 @@ cd Eatery
 npm install
 ```
 
-## OR
-
-```bash
-yarn install
-```
-
-3. Set up Firebase
-   - Go to [Firebase Console](https://console.firebase.google.com/)
-   - Click "Add project" and create a new project
-   - Enable Authentication:
-     - Go to Authentication → Sign-in method
-     - Enable "Email/Password" provider
-   - Set up Firestore Database:
-     - Go to Firestore Database → Create database
-     - Choose "Start in test mode" for development
-     - Select a location (preferably close to your users)
-   - Get your Firebase configuration:
-     - Go to Project Settings → General → Your apps
-     - Copy the Firebase config object
+3. Set up Supabase
+   - Go to [Supabase Console](https://supabase.com)
+   - Create a new project
+   - Run the schema from `scripts/supabase-schema.sql`
+   - Get your project URL and anon key
 
 4. Configure environment variables
    - Copy `.env.example` to `.env`:
      ```bash
      cp .env.example .env
      ```
-   - Add your Firebase credentials to `.env`:
+   - Add your Supabase credentials:
      ```
-     EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key
-     EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-     EXPO_PUBLIC_FIREBASE_DATABASE_URL=https://your_project-default-rtdb.firebaseio.com
-     EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-     EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-     EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-     EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
+     EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+     EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
      ```
-   - Replace the placeholder values with your actual Firebase config
 
 5. Start the development server
 
@@ -125,7 +140,129 @@ yarn install
 npm start
 ```
 
+## 📊 Database Schema
+
+### Users (via Supabase Auth)
+
+```typescript
+{
+  id: string (UUID),
+  email: string,
+  created_at: timestamp
+}
+```
+
+### User Profiles
+
+```typescript
+{
+  id: UUID,
+  user_id: UUID (FK to auth.users),
+  name: string,
+  surname: string,
+  contact_number: string,
+  address: string,
+  profile_image: string,
+  created_at: timestamp,
+  updated_at: timestamp
+}
+```
+
+### Food Categories
+
+```typescript
+{
+  id: UUID,
+  name: string,
+  order_num: integer,
+  created_at: timestamp,
+  updated_at: timestamp
+}
+```
+
+### Restaurants
+
+```typescript
+{
+  id: UUID,
+  name: string,
+  description: string,
+  image_url: string,
+  rating: decimal,
+  address: string,
+  phone: string,
+  created_at: timestamp,
+  updated_at: timestamp
+}
+```
+
+### Food Items
+
+```typescript
+{
+  id: UUID,
+  name: string,
+  description: string,
+  price: decimal,
+  image_url: string,
+  category_id: UUID (FK),
+  restaurant_id: UUID (FK),
+  distance: string,
+  delivery_time: string,
+  sides: JSONB,
+  drinks: JSONB,
+  extras: JSONB,
+  optional_ingredients: JSONB,
+  created_at: timestamp,
+  updated_at: timestamp
+}
+```
+
+### Orders
+
+```typescript
+{
+  id: UUID,
+  user_id: UUID (FK to auth.users),
+  total: decimal,
+  status: enum ('pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'),
+  delivery_address: string,
+  payment_method: string,
+  created_at: timestamp,
+  updated_at: timestamp
+}
+```
+
+### Order Items
+
+```typescript
+{
+  id: UUID,
+  order_id: UUID (FK),
+  food_item_id: UUID (FK),
+  quantity: integer,
+  subtotal: decimal,
+  selected_sides: JSONB,
+  selected_drinks: JSONB,
+  selected_extras: JSONB,
+  selected_ingredients: JSONB,
+  customizations: JSONB,
+  created_at: timestamp,
+  updated_at: timestamp
+}
+```
+
+## 🔒 Security
+
+- **Supabase Authentication** for secure user management
+- **Row Level Security (RLS)** policies on all tables
+- **Environment variables** for sensitive configuration
+- **Input validation** on all forms
+- **Secure payment processing** integration ready
+
 ## 📱 Usage
+
+### For Users
 
 1. **Register/Login**: Create an account or sign in
 2. **Browse Menu**: Select categories to view food items
@@ -134,12 +271,13 @@ npm start
 5. **Checkout**: Enter delivery details and payment
 6. **Track Orders**: View order history and status
 
-## 🔒 Security
+### For Admins
 
-- Firebase Authentication for secure user management
-- Environment variables for sensitive configuration
-- Input validation on all forms
-- Secure payment processing (integration ready)
+1. **Access Dashboard**: Navigate to admin dashboard
+2. **View Analytics**: Check revenue and order metrics
+3. **Manage Orders**: Update order statuses
+4. **Manage Items**: Add, edit, or delete food items
+5. **Configure Settings**: Update restaurant information
 
 ## 🚀 Deployment
 
@@ -156,56 +294,42 @@ expo build:ios
 expo build:web
 ```
 
-## 📊 Database Schema
+### Render.com Deployment
 
-### Users Collection
+1. Create a Render account
+2. Connect your GitHub repository
+3. Configure build and start commands
+4. Deploy
 
-```typescript
-{
-  uid: string,
-  email: string,
-  name: string,
-  surname: string,
-  contactNumber: string,
-  address: string,
-  cardDetails?: CardDetails,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+## 🎯 Key Features Implementation
 
-### Orders Collection
+### Authentication Flow
 
-```typescript
-{
-  id: string,
-  userId: string,
-  items: OrderItem[],
-  total: number,
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled',
-  deliveryAddress: string,
-  paymentMethod: string,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+- Email/password registration with profile setup
+- Secure login with session management
+- Profile updates with image upload
+- Password reset functionality
 
-### Food Items Collection
+### Order Management
 
-```typescript
-{
-  id: string,
-  name: string,
-  description: string,
-  price: number,
-  imageUrl: string,
-  categoryId: string,
-  sides?: Option[],
-  drinks?: Option[],
-  extras?: Option[],
-  optionalIngredients?: Option[]
-}
-```
+- Real-time order status updates
+- Order history with filtering
+- Detailed order information
+- Order tracking
+
+### Cart System
+
+- Add/remove items
+- Update quantities
+- Calculate totals with tax and delivery
+- Persistent cart state
+
+### Admin Dashboard
+
+- Revenue analytics with charts
+- Top-selling items
+- Order status distribution
+- Food item management
 
 ## 🤝 Contributing
 
@@ -221,8 +345,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🎯 Future Enhancements
 
-- [ ] Real-time order tracking
-- [ ] Push notifications
+- [ ] Real-time order tracking with maps
+- [ ] Push notifications for order updates
 - [ ] Rating and review system
 - [ ] Loyalty program
 - [ ] Multiple restaurant support
@@ -230,11 +354,31 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ ] Payment gateway integration (Stripe, PayPal)
 - [ ] Social login options
 - [ ] Offline mode support
+- [ ] Multi-language support
 
 ## 📞 Contact
 
 For questions or support, please open an issue on GitHub or contact the development team.
 
+## 🎨 Design Resources
+
+### Figma Design
+[Link to Figma design file - to be added]
+
+### Color Palette
+- Primary: #11181C
+- Secondary: #6b7280
+- Accent: #3b82f6
+- Success: #10b981
+- Warning: #f59e0b
+- Error: #ef4444
+
+### Typography
+- Font Family: System Font (SF Pro Display)
+- Headings: 24px Bold
+- Body: 14-16px Regular
+- Small: 12px Regular
+
 ---
 
-**Built with ❤️ using React Native and Firebase**
+**Built with ❤️ using React Native and Supabase**

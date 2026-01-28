@@ -9,12 +9,14 @@ interface FixedHeaderProps {
   title?: string;
   showBackButton?: boolean;
   backgroundColor?: string;
+  showLogo?: boolean; // New prop
 }
 
 export default function FixedHeader({
   title,
   showBackButton = false,
   backgroundColor = "#fff",
+  showLogo = true, // Default to true
 }: FixedHeaderProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -45,15 +47,17 @@ export default function FixedHeader({
             <IconSymbol name="chevron.left" size={24} color="#11181C" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity onPress={handleHomePress}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("../assets/images/Eatery Logo.png")}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-            </View>
-          </TouchableOpacity>
+          showLogo && ( // Conditionally render logo
+            <TouchableOpacity onPress={handleHomePress}>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require("../assets/images/Eatery Logo.png")}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+          )
         )}
       </View>
 

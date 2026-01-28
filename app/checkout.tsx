@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks";
+import { useCart } from "@/hooks";
+import { supabase } from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -33,9 +34,56 @@ export default function CheckoutScreen() {
       return;
     }
 
+    if (!user) {
+      Alert.alert("Error", "User not authenticated");
+      return;
+    }
+
     setLoading(true);
     try {
-      // TODO: Save order to Firestore
+      const subtotal = getTotal();
+      const deliveryFee = 2.99;
+      const tax = subtotal * 0.1;
+      const total = subtotal + deliveryFee + tax;
+
+      // Create order in Supabase
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert([
+          {
+            user_id: user.uid,
+            total: total,
+            status: "pending",
+            delivery_address: deliveryAddress,
+            payment_method: selectedCard,
+          },
+        ])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Add order items
+      if (orderData) {
+        const orderItems = items.map((item) => ({
+          order_id: orderData.id,
+          food_item_id: item.foodItem.id,
+          quantity: item.quantity,
+          subtotal: item.foodItem.price * item.quantity,
+          selected_sides: item.selectedSides || null,
+          selected_drinks: item.selectedDrinks || null,
+          selected_extras: item.selectedExtras || null,
+          selected_ingredients: item.selectedIngredients || null,
+          customizations: item.customizations || null,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+      }
+
       Alert.alert(
         "Order Placed!",
         "Your order has been successfully placed. You will receive a confirmation shortly.",
@@ -57,6 +105,7 @@ export default function CheckoutScreen() {
         ],
       );
     } catch (error) {
+      console.error("Error placing order:", error);
       Alert.alert("Error", "Failed to place order. Please try again.");
     } finally {
       setLoading(false);

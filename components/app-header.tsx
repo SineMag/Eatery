@@ -2,6 +2,7 @@ import { Logo } from "@/components/logo";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -24,7 +25,9 @@ export function AppHeader({
   customProfileImage,
 }: AppHeaderProps) {
   const { user } = useAuth();
+  const { getItemCount } = useCart();
   const router = useRouter();
+  const cartItemCount = getItemCount();
 
   return (
     <View style={styles.header}>
@@ -47,12 +50,20 @@ export function AppHeader({
         {rightAction || (
           <>
             {showCart && (
-              <TouchableOpacity onPress={() => router.push("/(tabs)/cart")}>
+              <TouchableOpacity
+                style={styles.cartButton}
+                onPress={() => router.push("/(tabs)/cart")}
+              >
                 <IconSymbol
                   name="hand.point.up.left.fill"
                   size={24}
                   color="#11181C"
                 />
+                {cartItemCount > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             )}
             {showLogo && <Logo size="medium" />}
@@ -96,5 +107,25 @@ const styles = StyleSheet.create({
   },
   titleSpacer: {
     width: 48,
+  },
+  cartButton: {
+    position: "relative",
+  },
+  cartBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#ef4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
   },
 });

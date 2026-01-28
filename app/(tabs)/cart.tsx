@@ -1,6 +1,6 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks";
+import { useCart } from "@/hooks";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -65,7 +65,7 @@ export default function CartScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Cart ({items.length})</Text>
         <TouchableOpacity onPress={handleClearCart}>
-          <IconSymbol name="hand.thumbsup.fill" size={20} color="#ef4444" />
+          <IconSymbol name="trash" size={20} color="#ef4444" />
         </TouchableOpacity>
       </View>
 
@@ -139,7 +139,7 @@ export default function CartScreen() {
       <View style={styles.footer}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.itemPrice}>R{getTotal().toFixed(2)}</Text>
+          <Text style={styles.totalPrice}>R{getTotal().toFixed(2)}</Text>
         </View>
         <TouchableOpacity
           style={styles.checkoutButton}
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     color: "#11181C",
   },
   totalPrice: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#11181C",
   },

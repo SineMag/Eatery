@@ -1,16 +1,12 @@
-import { useAuth } from "@/hooks/useAuth";
-import { Redirect, Stack } from "expo-router";
+import { useAuth } from "@/hooks";
+import { Stack } from "expo-router";
 import { View } from "react-native";
 
 export default function AuthLayout() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return <View />;
-  }
-
-  if (user) {
-    return <Redirect href="/(tabs)" />;
   }
 
   return (

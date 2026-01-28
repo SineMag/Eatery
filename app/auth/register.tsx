@@ -1,6 +1,6 @@
-import { auth } from "@/utils/firebase";
+import { useAuth } from "@/hooks";
+import { createUserProfile } from "@/utils/supabase";
 import { useRouter } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import {
   Alert,
@@ -14,7 +14,6 @@ import {
   View,
 } from "react-native";
 import { Logo } from "../../components/logo";
-import { userService } from "../../utils/user-service";
 
 export default function RegisterScreen() {
   const [formData, setFormData] = useState({
@@ -28,11 +27,9 @@ export default function RegisterScreen() {
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { signUp } = useAuth();
 
   const handleRegister = async () => {
-    console.log("handleRegister called!");
-    console.log("Current loading state:", loading);
-
     const {
       email,
       password,
@@ -43,13 +40,6 @@ export default function RegisterScreen() {
       address,
     } = formData;
 
-    console.log("Form data:", {
-      email,
-      name,
-      surname,
-      hasPassword: !!password,
-    });
-
     if (
       !email ||
       !password ||
@@ -59,19 +49,16 @@ export default function RegisterScreen() {
       !contactNumber ||
       !address
     ) {
-      console.log("Validation failed - missing fields");
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     if (password !== confirmPassword) {
-      console.log("Password mismatch");
       Alert.alert("Error", "Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      console.log("Password too short");
       Alert.alert("Error", "Password must be at least 6 characters");
       return;
     }
@@ -79,72 +66,65 @@ export default function RegisterScreen() {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      console.log("Invalid email format");
       Alert.alert("Error", "Please enter a valid email address");
       return;
     }
 
     // Additional password validation
     if (!/(?=.*[a-zA-Z])/.test(password)) {
-      console.log("Password needs letter");
       Alert.alert("Error", "Password must contain at least one letter");
       return;
     }
 
-    console.log("All validation passed, setting loading to true");
     setLoading(true);
     try {
-      console.log("Creating user with email:", email);
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
+      const { data, error } = await signUp(
         email,
         password,
+        `${name} ${surname}`,
       );
-      console.log("User created successfully:", userCredential.user.uid);
 
-      // Save user profile to Firestore
-      try {
-        await userService.createUserProfile({
-          uid: userCredential.user.uid,
-          email: userCredential.user.email!,
-          name: name.trim(),
-          surname: surname.trim(),
-          contactNumber: contactNumber.trim(),
-        });
-        console.log("User profile saved to Firestore");
-      } catch (profileError) {
-        console.error("Error saving user profile:", profileError);
-        // Continue anyway - user was created in Auth
+      if (error) {
+        throw error;
+      }
+
+      // Save user profile to Supabase
+      if (data.user?.id) {
+        try {
+          await createUserProfile({
+            user_id: data.user.id,
+            name: name.trim(),
+            surname: surname.trim(),
+            contact_number: contactNumber.trim(),
+            address: address.trim(),
+          });
+        } catch (profileError) {
+          console.error("Error saving user profile:", profileError);
+          // Continue anyway - user was created in Auth
+        }
       }
 
       Alert.alert("Success", "Account created successfully!");
       router.replace("/" as any);
     } catch (error: any) {
       console.error("Registration error:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
 
       let errorMessage = "Registration failed. Please try again.";
 
-      if (error.code === "auth/email-already-in-use") {
+      if (error.message?.includes("User already registered")) {
         errorMessage =
           "This email is already registered. Please use a different email or sign in.";
-      } else if (error.code === "auth/invalid-email") {
+      } else if (error.message?.includes("Invalid email")) {
         errorMessage = "Invalid email address. Please check and try again.";
-      } else if (error.code === "auth/operation-not-allowed") {
-        errorMessage =
-          "Email/password accounts are not enabled. Please contact support.";
-      } else if (error.code === "auth/weak-password") {
+      } else if (error.message?.includes("Password should be at least")) {
         errorMessage =
           "Password is too weak. Please choose a stronger password.";
-      } else if (error.code === "auth/network-request-failed") {
-        errorMessage =
-          "Network error. Please check your internet connection and try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
       Alert.alert("Registration Error", errorMessage);
     } finally {
-      console.log("Setting loading back to false");
       setLoading(false);
     }
   };

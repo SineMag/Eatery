@@ -2,7 +2,7 @@ import LayoutWrapper from "@/components/layout-wrapper";
 import { SearchBar } from "@/components/search-bar";
 import { Snackbar } from "@/components/snackbar";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -54,6 +54,76 @@ export default function HomeScreen() {
     }
   }, [user]);
 
+  // Initialize most visited restaurants data
+  useEffect(() => {
+    // Most visited restaurants with actual images
+    setMostVisitedRestaurants([
+      {
+        id: "1",
+        name: "KFC",
+        visitCount: 12,
+        lastVisited: "yesterday",
+        cuisine: "Fast Food",
+        rating: 4.2,
+        image: require("../assets/images/KFC.jpg"),
+      },
+      {
+        id: "2",
+        name: "McDonald's",
+        visitCount: 8,
+        lastVisited: "3 days ago",
+        cuisine: "Fast Food",
+        rating: 4.0,
+        image: require("../assets/images/McDonald's.jpg"),
+      },
+      {
+        id: "3",
+        name: "Nandos",
+        visitCount: 5,
+        lastVisited: "1 week ago",
+        cuisine: "Portuguese",
+        rating: 4.5,
+        image: require("../assets/images/Nandos.jpg"),
+      },
+      {
+        id: "4",
+        name: "Pedros",
+        visitCount: 4,
+        lastVisited: "2 weeks ago",
+        cuisine: "Portuguese",
+        rating: 4.3,
+        image: require("../assets/images/Pedros.jpg"),
+      },
+      {
+        id: "5",
+        name: "Hungry Lion",
+        visitCount: 3,
+        lastVisited: "3 weeks ago",
+        cuisine: "Fast Food",
+        rating: 3.9,
+        image: require("../assets/images/Hungry Lion.jpg"),
+      },
+      {
+        id: "6",
+        name: "Vida e Caffè",
+        visitCount: 6,
+        lastVisited: "4 days ago",
+        cuisine: "Cafe",
+        rating: 4.4,
+        image: require("../assets/images/Vida Caffe.jpg"),
+      },
+      {
+        id: "7",
+        name: "Chateau Gateaux",
+        visitCount: 2,
+        lastVisited: "5 days ago",
+        cuisine: "Bakery",
+        rating: 4.6,
+        image: require("../assets/images/chateau gateaux.jpg"),
+      },
+    ]);
+  }, []);
+
   // Mock function to load user data (in real app, this would come from Firestore)
   const loadUserData = () => {
     // Mock recent orders
@@ -98,37 +168,6 @@ export default function HomeScreen() {
         cuisine: "Japanese",
         rating: 4.8,
         image: require("../assets/images/main-dish3.jpg"),
-      },
-    ]);
-
-    // Mock most visited restaurants (based on order frequency)
-    setMostVisitedRestaurants([
-      {
-        id: "1",
-        name: "The Grill House",
-        visitCount: 8,
-        lastVisited: "2 days ago",
-        cuisine: "Steakhouse",
-        rating: 4.5,
-        image: require("../assets/images/main-dish.jpg"),
-      },
-      {
-        id: "2",
-        name: "Burger Barn",
-        visitCount: 5,
-        lastVisited: "1 week ago",
-        cuisine: "American",
-        rating: 4.0,
-        image: require("../assets/images/burger.jpg"),
-      },
-      {
-        id: "3",
-        name: "Taco Tuesday",
-        visitCount: 3,
-        lastVisited: "2 weeks ago",
-        cuisine: "Mexican",
-        rating: 4.3,
-        image: require("../assets/images/burger2.jpg"),
       },
     ]);
   };
@@ -208,7 +247,7 @@ export default function HomeScreen() {
       medium: isDesktop ? 20 : isTablet ? 16 : 12,
       small: isDesktop ? 16 : isTablet ? 12 : 8,
     },
-    categoryColumns: isDesktop ? 4 : isTablet ? 3 : 2,
+    categoryColumns: 2, // Always show 2 columns for better mobile experience
   };
 
   // Dynamic styles
@@ -224,8 +263,9 @@ export default function HomeScreen() {
       marginBottom: responsive.spacing.medium,
     },
     restaurantCard: {
-      width: responsive.cardWidth,
-      marginRight: responsive.spacing.small,
+      width: 140, // Fixed width for horizontal scroll
+      marginRight: 12, // Fixed margin for consistent spacing
+      marginBottom: 0, // No bottom margin in horizontal scroll
     },
     restaurantImage: {
       height: responsive.cardHeight * 0.4,
@@ -234,8 +274,9 @@ export default function HomeScreen() {
       fontSize: responsive.fontSize.card,
     },
     categoryCard: {
-      width: `${100 / responsive.categoryColumns - 2}%`,
-      maxWidth: responsive.cardWidth,
+      width: "48%", // Two cards per row with 2% gap
+      marginBottom: responsive.spacing.medium,
+      marginRight: "2%",
     },
     categoryName: {
       fontSize: responsive.fontSize.text,
@@ -260,7 +301,7 @@ export default function HomeScreen() {
               />
               <Text style={styles.heroTitle}>Welcome to Eatery</Text>
               <Text style={styles.heroSubtitle}>
-                Delicious food delivered to your doorstep
+                Remember to eat when your stomach growls
               </Text>
 
               <View style={styles.authButtons}>
@@ -278,6 +319,12 @@ export default function HomeScreen() {
                   <Text style={styles.registerButtonText}>Register</Text>
                 </TouchableOpacity>
               </View>
+              <TouchableOpacity
+                style={styles.adminLink}
+                onPress={() => router.push("/staff/login")}
+              >
+                <Text style={styles.adminLinkText}>Staff Entry</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -288,10 +335,10 @@ export default function HomeScreen() {
             <View style={styles.previewGrid}>
               <TouchableOpacity
                 style={styles.previewCard}
-                onPress={() => router.push("/menu/mains")}
+                onPress={() => router.push("/menu/[category]" as any)}
               >
                 <Image
-                  source={require("../public/Main -Menu.png")}
+                  source={getCategoryImage("Mains")}
                   style={styles.previewImage}
                 />
                 <Text style={styles.previewTitle}>Delicious Mains</Text>
@@ -305,7 +352,7 @@ export default function HomeScreen() {
                 onPress={() => router.push("/menu/starters")}
               >
                 <Image
-                  source={require("../public/Starters - Menu.png")}
+                  source={getCategoryImage("Starters")}
                   style={styles.previewImage}
                 />
                 <Text style={styles.previewTitle}>Tasty Starters</Text>
@@ -319,7 +366,7 @@ export default function HomeScreen() {
                 onPress={() => router.push("/menu/desserts")}
               >
                 <Image
-                  source={require("../public/Dessert - Menu.png")}
+                  source={getCategoryImage("Desserts")}
                   style={styles.previewImage}
                 />
                 <Text style={styles.previewTitle}>Sweet Desserts</Text>
@@ -333,7 +380,7 @@ export default function HomeScreen() {
                 onPress={() => router.push("/menu/beverages")}
               >
                 <Image
-                  source={require("../public/Beverages - Menu.png")}
+                  source={getCategoryImage("Beverages")}
                   style={styles.previewImage}
                 />
                 <Text style={styles.previewTitle}>Refreshing Beverages</Text>
@@ -344,51 +391,60 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Features Section */}
-          <View style={styles.featuresSection}>
-            <Text style={styles.sectionTitle}>Why Choose Eatery</Text>
-
-            <View style={styles.featureList}>
-              <View style={styles.featureItem}>
-                <IconSymbol
-                  name="checkmark.circle.fill"
-                  size={24}
-                  color="#10b981"
-                />
-                <Text style={styles.featureText}>
-                  Fast delivery to your location
-                </Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <IconSymbol
-                  name="checkmark.circle.fill"
-                  size={24}
-                  color="#10b981"
-                />
-                <Text style={styles.featureText}>
-                  Fresh ingredients every time
-                </Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <IconSymbol
-                  name="checkmark.circle.fill"
-                  size={24}
-                  color="#10b981"
-                />
-                <Text style={styles.featureText}>Easy online ordering</Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <IconSymbol
-                  name="checkmark.circle.fill"
-                  size={24}
-                  color="#10b981"
-                />
-                <Text style={styles.featureText}>Secure payment options</Text>
-              </View>
+          {/* Most Liked In The Area */}
+          <View
+            style={[
+              styles.userSection,
+              { marginTop: 0, paddingHorizontal: 16 },
+            ]}
+          >
+            <View style={styles.userSectionHeader}>
+              <Text style={[styles.sectionTitle, { marginLeft: 0 }]}>
+                Most Liked In The Area
+              </Text>
             </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScroll}
+            >
+              {mostVisitedRestaurants.map((restaurant) => (
+                <TouchableOpacity
+                  style={styles.restaurantCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/menu/mains",
+                      params: { restaurantId: restaurant.id },
+                    })
+                  }
+                >
+                  <View>
+                    <Image
+                      source={restaurant.image}
+                      style={[
+                        styles.restaurantImage,
+                        {
+                          height: 120,
+                          width: "100%",
+                          borderTopLeftRadius: 8,
+                          borderTopRightRadius: 8,
+                          marginBottom: 8,
+                        },
+                      ]}
+                      resizeMode="cover"
+                    />
+                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                    <Text style={styles.restaurantCuisine}>
+                      {restaurant.cuisine}
+                    </Text>
+                    <View style={styles.rating}>
+                      <IconSymbol name="star.fill" size={14} color="#fbbf24" />
+                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
 
           {/* Call to Action */}
@@ -398,9 +454,15 @@ export default function HomeScreen() {
               style={styles.ctaButton}
               onPress={() => router.push("/auth/register")}
             >
-              <Text style={styles.ctaButtonText}>Create Account</Text>
-            </TouchableOpacity>
-          </View>
+              <Text style={styles.ctaButtonText}>Get Started</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+              style={styles.ctaAdminButton}
+              onPress={() => router.push("/staff/login")}
+              >
+              <Text style={styles.ctaAdminButtonText}>Staff Entry</Text>
+              </TouchableOpacity>
+              </View>
         </ScrollView>
       ) : (
         // Regular content for authenticated users
@@ -409,7 +471,7 @@ export default function HomeScreen() {
           {user && (
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeText}>
-                {getGreeting()}, {user.name}!
+                {getGreeting()}, {user?.name || "User"}!
               </Text>
             </View>
           )}
@@ -484,62 +546,27 @@ export default function HomeScreen() {
                     key={restaurant.id}
                     style={[styles.restaurantCard, { width: 140 }]}
                   >
-                    <Image
-                      source={restaurant.image}
-                      style={[styles.restaurantImage, { height: 80 }]}
-                    />
-                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                    <Text style={styles.restaurantCuisine}>
-                      {restaurant.cuisine}
-                    </Text>
-                    <View style={styles.rating}>
-                      <IconSymbol name="star.fill" size={12} color="#fbbf24" />
-                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Most Visited Restaurants - Only show if user has visit history */}
-          {user && mostVisitedRestaurants.length > 0 && (
-            <View style={styles.userSection}>
-              <View style={styles.userSectionHeader}>
-                <Text style={styles.sectionTitle}>Most Visited</Text>
-                <TouchableOpacity onPress={() => router.push("/")}>
-                  <Text style={styles.seeAllText}>Explore More</Text>
-                </TouchableOpacity>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.horizontalScroll}
-              >
-                {mostVisitedRestaurants.map((restaurant) => (
-                  <TouchableOpacity
-                    key={restaurant.id}
-                    style={styles.restaurantCard}
-                  >
-                    <Image
-                      source={restaurant.image}
-                      style={styles.restaurantImage}
-                    />
-                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                    <Text style={styles.restaurantCuisine}>
-                      {restaurant.cuisine}
-                    </Text>
-                    <View style={styles.visitInfo}>
-                      <Text style={styles.visitCount}>
-                        {restaurant.visitCount} visits
+                    <View>
+                      <Image
+                        source={restaurant.image}
+                        style={[styles.restaurantImage, { height: 80 }]}
+                      />
+                      <Text style={styles.restaurantName}>
+                        {restaurant.name}
                       </Text>
-                      <Text style={styles.lastVisited}>
-                        {restaurant.lastVisited}
+                      <Text style={styles.restaurantCuisine}>
+                        {restaurant.cuisine}
                       </Text>
-                    </View>
-                    <View style={styles.rating}>
-                      <IconSymbol name="star.fill" size={12} color="#fbbf24" />
-                      <Text style={styles.ratingText}>{restaurant.rating}</Text>
+                      <View style={styles.rating}>
+                        <IconSymbol
+                          name="star.fill"
+                          size={12}
+                          color="#fbbf24"
+                        />
+                        <Text style={styles.ratingText}>
+                          {restaurant.rating}
+                        </Text>
+                      </View>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -581,43 +608,45 @@ export default function HomeScreen() {
                     ]}
                     onPress={() => router.push(`/menu/${restaurant.id}`)}
                   >
-                    <View
-                      style={[
-                        styles.restaurantImage,
-                        dynamicStyles.restaurantImage,
-                      ]}
-                    >
-                      <IconSymbol name="fork.knife" size={32} color="#fff" />
-                    </View>
-                    <Text
-                      style={[
-                        styles.restaurantName,
-                        dynamicStyles.restaurantName,
-                      ]}
-                    >
-                      {restaurant.name}
-                    </Text>
-                    <Text style={styles.restaurantCuisine}>
-                      {restaurant.cuisine}
-                    </Text>
-                    <View style={styles.restaurantInfo}>
-                      <Text style={styles.restaurantDistance}>
-                        {restaurant.distance}
-                      </Text>
-                      <View style={styles.rating}>
-                        <IconSymbol
-                          name="star.fill"
-                          size={12}
-                          color="#fbbf24"
-                        />
-                        <Text style={styles.ratingText}>
-                          {restaurant.rating}
-                        </Text>
+                    <View>
+                      <View
+                        style={[
+                          styles.restaurantImage,
+                          dynamicStyles.restaurantImage,
+                        ]}
+                      >
+                        <IconSymbol name="fork.knife" size={32} color="#fff" />
                       </View>
+                      <Text
+                        style={[
+                          styles.restaurantName,
+                          dynamicStyles.restaurantName,
+                        ]}
+                      >
+                        {restaurant.name}
+                      </Text>
+                      <Text style={styles.restaurantCuisine}>
+                        {restaurant.cuisine}
+                      </Text>
+                      <View style={styles.restaurantInfo}>
+                        <Text style={styles.restaurantDistance}>
+                          {restaurant.distance}
+                        </Text>
+                        <View style={styles.rating}>
+                          <IconSymbol
+                            name="star.fill"
+                            size={12}
+                            color="#fbbf24"
+                          />
+                          <Text style={styles.ratingText}>
+                            {restaurant.rating}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.searchLocation} numberOfLines={1}>
+                        {restaurant.searchLocation}
+                      </Text>
                     </View>
-                    <Text style={styles.searchLocation} numberOfLines={1}>
-                      {restaurant.searchLocation}
-                    </Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -675,6 +704,7 @@ const styles = StyleSheet.create({
   },
   landingContent: {
     flex: 1,
+    paddingBottom: 80, // Account for bottom navigation
   },
   heroSection: {
     backgroundColor: "#f8fafc",
@@ -737,6 +767,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  adminLink: {
+    marginTop: 12,
+  },
+  adminLinkText: {
+    color: "#6b7280",
+    fontSize: 14,
+    textAlign: "center",
+    textDecorationLine: "underline",
+  },
   sneakPeekSection: {
     paddingVertical: 40,
     paddingHorizontal: 24,
@@ -745,12 +784,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    gap: 16,
+    padding: 10,
   },
   previewCard: {
     width: "48%",
     backgroundColor: "#fff",
     borderRadius: 12,
+    marginBottom: 16,
     // Web-compatible shadow
     boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
     // Native shadow properties
@@ -802,6 +842,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 24,
     alignItems: "center",
+    paddingBottom: 60, // Add extra bottom padding to ensure button is visible
   },
   ctaTitle: {
     fontSize: 24,
@@ -816,6 +857,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     alignItems: "center",
+  },
+  ctaAdminButton: {
+    marginTop: 12,
+    backgroundColor: "#374151",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  ctaAdminButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
   ctaButtonText: {
     color: "#fff",
@@ -854,10 +908,12 @@ const styles = StyleSheet.create({
   },
   // Restaurant styles (still used for favorites and most visited)
   restaurantCard: {
-    width: 160,
+    width: 140, // Slightly narrower to fit 5 cards
     backgroundColor: "#fff",
     borderRadius: 12,
-    marginRight: 12,
+    marginRight: "2%", // Fixed margin for consistent spacing
+    marginBottom: 0, // No bottom margin in horizontal scroll
+    padding: 8, // Added padding for better spacing
     // Web-compatible shadow
     boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
     // Native shadow properties
@@ -1005,8 +1061,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   horizontalScroll: {
-    marginHorizontal: -16,
     paddingHorizontal: 16,
+    marginBottom: 8,
+    paddingBottom: 8, // Add some bottom padding
   },
   // Order card styles
   orderCard: {

@@ -1,10 +1,14 @@
 import { AppHeader } from "@/components/app-header";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks";
 import { useImagePicker } from "@/hooks/useImagePicker";
-import { saveProfileImage, updateUserProfile } from "@/utils/firestore";
-import { uploadProfileImage, validateProfileImage } from "@/utils/storage";
+import {
+  updateUserProfile,
+  uploadProfileImage,
+  validateProfileImage,
+  saveProfileImage,
+} from "@/utils/supabase";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -55,23 +59,14 @@ export default function ProfileScreen() {
     try {
       setLoading(true);
 
-      // Update all profile details in Firestore
+      // Update all profile details in Supabase
       await updateUserProfile(user.uid, {
         name: formData.name.trim(),
         surname: formData.surname.trim(),
-        contactNumber: formData.contactNumber.trim(),
+        contact_number: formData.contactNumber.trim(),
         address: formData.address.trim(),
-        profileImage: profileImage || undefined,
+        profile_image: profileImage || null,
       });
-
-      // Update local user object to reflect changes immediately
-      if (user) {
-        user.name = formData.name.trim();
-        user.surname = formData.surname.trim();
-        user.contactNumber = formData.contactNumber.trim();
-        user.address = formData.address.trim();
-        user.profileImage = profileImage || undefined;
-      }
 
       Alert.alert("Success", "Profile updated successfully!");
       setIsEditing(false);
@@ -106,10 +101,10 @@ export default function ProfileScreen() {
         return;
       }
 
-      // Upload image to Firebase Storage
+      // Upload image to Supabase Storage
       const downloadURL = await uploadProfileImage(selectedImage, user.uid);
 
-      // Save the image URL to Firestore
+      // Save the image URL to Supabase
       await saveProfileImage(user.uid, downloadURL);
 
       // Update local state
