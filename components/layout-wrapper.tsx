@@ -9,6 +9,7 @@ interface LayoutWrapperProps {
   title?: string;
   showBackButton?: boolean;
   showBottomNavigation?: boolean;
+  showLogo?: boolean;
 }
 
 export default function LayoutWrapper({
@@ -16,6 +17,7 @@ export default function LayoutWrapper({
   title,
   showBackButton = false,
   showBottomNavigation = true,
+  showLogo = true,
 }: LayoutWrapperProps) {
   const pathname = usePathname();
 
@@ -24,15 +26,18 @@ export default function LayoutWrapper({
 
   // Don't show bottom navigation on auth screens only
   const isAuthScreen = pathname.startsWith("/auth");
+  
+  // Don't show header on staff login
+  const isStaffLogin = pathname === "/staff/login";
 
-  const shouldShowHeader = !isPaymentScreen;
+  const shouldShowHeader = !isPaymentScreen && !isStaffLogin;
   const shouldShowBottomNav =
-    showBottomNavigation && !isPaymentScreen && !isAuthScreen;
+    showBottomNavigation && !isPaymentScreen && !isAuthScreen && !isStaffLogin;
 
   return (
     <View style={styles.container}>
       {shouldShowHeader && (
-        <FixedHeader title={title} showBackButton={showBackButton} />
+        <FixedHeader title={title} showBackButton={showBackButton} showLogo={showLogo} />
       )}
       <View
         style={[

@@ -234,24 +234,12 @@ export default function PaymentScreen() {
       return;
     }
 
-    console.log("Starting Stripe payment process...");
+    console.log("Starting payment process...");
     setIsProcessing(true);
 
     try {
-      // Create payment intent with Stripe
-      const paymentIntent = await createPaymentIntent(187.5, "zar");
-      console.log("Payment intent created:", paymentIntent);
-
-      // In a real app, you would use Stripe Elements here
-      // For demo, we'll simulate the payment confirmation
+      // Simulate payment processing
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Confirm payment
-      const confirmedPayment = await confirmPayment(
-        paymentIntent.id,
-        selectedPaymentMethod,
-      );
-      console.log("Payment confirmed:", confirmedPayment);
 
       // Generate order number
       const orderNum = `ORD-${Date.now().toString().slice(-8)}`;
@@ -260,7 +248,7 @@ export default function PaymentScreen() {
       setIsProcessing(false);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Stripe payment error:", error);
+      console.error("Payment error:", error);
       setIsProcessing(false);
       Alert.alert(
         "Payment Error",
@@ -297,7 +285,7 @@ export default function PaymentScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <IconSymbol name="hand.point.up.left" size={24} color="#11181C" />
+          <IconSymbol name="chevron.left" size={24} color="#11181C" />
         </TouchableOpacity>
         <Text style={styles.title}>Payment</Text>
         <View style={{ width: 24 }} />

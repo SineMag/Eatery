@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -205,7 +206,7 @@ export default function AdminDashboard() {
           { id: 1003, customer: 'Peter Parker', time: '30 min ago', total: 55.50, status: 'Pending', color: '#60a5fa', notes: 'Ring bell twice.', payment: 'Cash' },
           { id: 1004, customer: 'Mary Jane', time: '10 min ago', total: 75.00, status: 'Cancelled', color: '#ef4444', notes: 'Changed my mind', payment: 'Card' },
         ].map((o) => (
-          <View key={o.id} style={styles.orderRow}>
+          <TouchableOpacity key={o.id} style={styles.orderRow} onPress={() => Alert.alert(`Order #${o.id}`, `Customer: ${o.customer}\nStatus: ${o.status}\nTotal: R${o.total.toFixed(2)}\nPayment: ${o.payment}${o.notes ? `\nNotes: ${o.notes}` : ''}`)}>
             <View style={styles.orderInfo}>
               <Text style={styles.orderNumber}>Order #{o.id}</Text>
               <Text style={styles.orderCustomer}>{o.customer}</Text>
@@ -214,15 +215,15 @@ export default function AdminDashboard() {
             </View>
             <View style={styles.orderAmount}>
               <Text style={styles.orderPrice}>R{o.total.toFixed(2)}</Text>
-              <TouchableOpacity style={[styles.orderStatus, { backgroundColor: o.color }]}>
+              <TouchableOpacity style={[styles.orderStatus, { backgroundColor: o.color }]} onPress={() => Alert.alert('Status', `Order is currently: ${o.status}`)}>
                 <Text style={styles.orderStatusText}>{o.status}</Text>
               </TouchableOpacity>
               <Text style={styles.paymentMethod}>Payment: {o.payment}</Text>
-              <TouchableOpacity style={styles.viewButton}>
+              <TouchableOpacity style={styles.viewButton} onPress={() => Alert.alert(`Order #${o.id} Details`, `Customer: ${o.customer}\nStatus: ${o.status}\nTotal: R${o.total.toFixed(2)}\nPayment: ${o.payment}${o.notes ? `\nNotes: ${o.notes}` : ''}`)}>
                 <Text style={styles.viewButtonText}>View</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </ScrollView>
@@ -302,11 +303,14 @@ export default function AdminDashboard() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header with Logo */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Admin Dashboard</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <IconSymbol name="xmark" size={24} color="#11181C" />
+        <TouchableOpacity onPress={() => router.replace("/")}>
+          <Image
+            source={require("../../assets/images/Eatery Logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
 
@@ -346,12 +350,16 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
-    padding: 16,
+    padding: 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#e5e5e5",
+  },
+  logo: {
+    width: 120,
+    height: 40,
   },
   headerTitle: {
     fontSize: 24,

@@ -81,17 +81,17 @@ export default function CartScreen() {
 
               {/* Customizations */}
               {item.selectedSides && item.selectedSides.length > 0 && (
-                <Text style={styles.customizationText}>
-                  Side: {item.selectedSides.map((s) => s.name).join(", ")}
+                <Text style={styles.customizationText} numberOfLines={1}>
+                  Sides: {item.selectedSides.map((s) => s.name).join(", ")}
                 </Text>
               )}
               {item.selectedDrinks && item.selectedDrinks.length > 0 && (
-                <Text style={styles.customizationText}>
+                <Text style={styles.customizationText} numberOfLines={1}>
                   Drink: {item.selectedDrinks.map((d) => d.name).join(", ")}
                 </Text>
               )}
               {item.selectedExtras && item.selectedExtras.length > 0 && (
-                <Text style={styles.customizationText}>
+                <Text style={styles.customizationText} numberOfLines={1}>
                   Extras: {item.selectedExtras.map((e) => e.name).join(", ")}
                 </Text>
               )}

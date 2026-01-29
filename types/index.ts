@@ -74,6 +74,7 @@ export interface Order {
     | "cancelled";
   deliveryAddress: string;
   paymentMethod: string;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
 }

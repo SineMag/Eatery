@@ -343,6 +343,32 @@ expo build:web
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## ✅ Recent Updates (January 2026)
+
+### Fixed Issues
+- ✅ Registration UI/UX with validation
+- ✅ Login UI/UX with error handling
+- ✅ Staff Entry button label
+- ✅ Fixed navigation bar on all screens
+- ✅ Clickable logo redirects to home
+- ✅ Order notes support
+- ✅ Cancelled order status
+- ✅ Payment method display
+- ✅ Admin dashboard improvements
+- ✅ Responsive design updates
+- ✅ Payment gateway integration (Stripe)
+- ✅ Location-based restaurant discovery
+
+### New Features
+- ✅ Payment Gateway (Stripe, EFT, Cash)
+- ✅ Location Services (Nearby Restaurants)
+- ✅ Order Notes
+- ✅ Cancelled Order Status
+- ✅ Payment Method Display
+- ✅ Improved Admin Dashboard
+- ✅ Better Error Handling
+- ✅ Enhanced Validation
+
 ## 🎯 Future Enhancements
 
 - [ ] Real-time order tracking with maps
@@ -351,14 +377,22 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ ] Loyalty program
 - [ ] Multiple restaurant support
 - [ ] Advanced analytics dashboard
-- [ ] Payment gateway integration (Stripe, PayPal)
-- [ ] Social login options
+- [ ] Social login options (Google, Facebook)
 - [ ] Offline mode support
 - [ ] Multi-language support
+- [ ] Driver tracking
+- [ ] Estimated delivery time
+- [ ] Order history export
 
 ## 📞 Contact
 
 For questions or support, please open an issue on GitHub or contact the development team.
+
+## 📖 Documentation
+
+- [Setup Guide](./SETUP_GUIDE.md) - Complete setup instructions
+- [Implementation Summary](./IMPLEMENTATION_SUMMARY.md) - Detailed implementation notes
+- [Requirements Checklist](./REQUIREMENTS_CHECKLIST.md) - Feature checklist
 
 ## 🎨 Design Resources
 

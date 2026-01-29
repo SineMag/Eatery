@@ -54,6 +54,7 @@ export default function FixedHeader({
                   source={require("../assets/images/Eatery Logo.png")}
                   style={styles.logoImage}
                   resizeMode="contain"
+                  accessibilityLabel="Eatery Logo"
                 />
               </View>
             </TouchableOpacity>
