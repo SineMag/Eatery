@@ -7,12 +7,33 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  TextInput,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useOrders } from '@/src/contexts/OrderContext';
 import { foodItems, categories } from '@/src/data/menuData';
 import { Order } from '@/src/types';
+import { 
+  BackIcon, 
+  ChartIcon, 
+  OrdersIcon, 
+  MenuIcon,
+  DollarIcon,
+  TrendingUpIcon,
+  PackageIcon,
+  UsersIcon,
+  EditIcon,
+  TrashIcon,
+  PlusIcon,
+  getCategoryIcon,
+  SettingsIcon
+} from '@/src/components/Icons';
+import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
+
+const screenWidth = Dimensions.get('window').width;
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   pending: { bg: '#fef3c7', text: '#d97706' },
@@ -23,11 +44,28 @@ const statusColors: Record<string, { bg: string; text: string }> = {
   cancelled: { bg: '#fee2e2', text: '#dc2626' },
 };
 
+const chartConfig = {
+  backgroundGradientFrom: '#fff',
+  backgroundGradientTo: '#fff',
+  color: (opacity = 1) => `rgba(17, 24, 28, ${opacity})`,
+  strokeWidth: 2,
+  barPercentage: 0.5,
+  decimalPlaces: 0,
+};
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const { orders, updateOrderStatus } = useOrders();
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'items'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'items' | 'settings'>('overview');
+  const [showAddItem, setShowAddItem] = useState(false);
+  const [restaurantInfo, setRestaurantInfo] = useState({
+    name: 'Eatery Restaurant',
+    address: '123 Food Street, Johannesburg',
+    phone: '+27 11 123 4567',
+    email: 'info@eatery.co.za',
+    openingHours: '09:00 - 22:00',
+  });
 
   const stats = useMemo(() => {
     const totalRevenue = orders
@@ -60,8 +98,38 @@ export default function AdminDashboard() {
       }, {} as Record<string, { name: string; quantity: number; revenue: number }>)
     ).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
-    return { totalRevenue, todayOrders: todayOrders.length, totalOrders: orders.length, statusCounts, topItems };
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      return date.toISOString().split('T')[0];
+    });
+
+    const dailyRevenue = last7Days.map(date => {
+      const dayOrders = orders.filter(o => 
+        o.createdAt.split('T')[0] === date && o.status !== 'cancelled'
+      );
+      return dayOrders.reduce((sum, o) => sum + o.total, 0);
+    });
+
+    return { 
+      totalRevenue, 
+      todayOrders: todayOrders.length, 
+      totalOrders: orders.length, 
+      statusCounts, 
+      topItems,
+      dailyRevenue,
+      last7Days,
+      avgOrderValue: orders.length > 0 ? totalRevenue / orders.filter(o => o.status !== 'cancelled').length : 0
+    };
   }, [orders]);
+
+  const pieData = Object.entries(stats.statusCounts).map(([status, count], index) => ({
+    name: status,
+    count,
+    color: ['#d97706', '#2563eb', '#db2777', '#059669', '#374151', '#dc2626'][index] || '#6b7280',
+    legendFontColor: '#374151',
+    legendFontSize: 12,
+  }));
 
   const handleStatusUpdate = (orderId: string, newStatus: Order['status']) => {
     Alert.alert(
@@ -74,82 +142,130 @@ export default function AdminDashboard() {
     );
   };
 
+  const handleSaveRestaurantInfo = () => {
+    Alert.alert('Success', 'Restaurant information updated successfully!');
+  };
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: ChartIcon },
+    { id: 'orders', label: 'Orders', icon: OrdersIcon },
+    { id: 'items', label: 'Menu', icon: MenuIcon },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Back</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <BackIcon size={24} color="#11181C" />
         </TouchableOpacity>
         <Text style={styles.title}>Admin Dashboard</Text>
-        <View style={{ width: 60 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <View style={styles.tabs}>
-        {(['overview', 'orders', 'items'] as const).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {tabs.map((tab) => {
+          const IconComponent = tab.icon;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+              onPress={() => setActiveTab(tab.id as any)}
+            >
+              <IconComponent size={18} color={activeTab === tab.id ? '#fff' : '#6b7280'} />
+              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {activeTab === 'overview' && (
           <>
             <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>R{stats.totalRevenue.toFixed(2)}</Text>
+              <View style={[styles.statCard, { backgroundColor: '#f0fdf4' }]}>
+                <View style={styles.statHeader}>
+                  <DollarIcon size={24} color="#10b981" />
+                </View>
+                <Text style={styles.statValue}>R{stats.totalRevenue.toFixed(0)}</Text>
                 <Text style={styles.statLabel}>Total Revenue</Text>
               </View>
-              <View style={styles.statCard}>
+              <View style={[styles.statCard, { backgroundColor: '#eff6ff' }]}>
+                <View style={styles.statHeader}>
+                  <PackageIcon size={24} color="#3b82f6" />
+                </View>
                 <Text style={styles.statValue}>{stats.totalOrders}</Text>
                 <Text style={styles.statLabel}>Total Orders</Text>
               </View>
-              <View style={styles.statCard}>
+              <View style={[styles.statCard, { backgroundColor: '#fef3c7' }]}>
+                <View style={styles.statHeader}>
+                  <TrendingUpIcon size={24} color="#d97706" />
+                </View>
                 <Text style={styles.statValue}>{stats.todayOrders}</Text>
                 <Text style={styles.statLabel}>Today's Orders</Text>
               </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{foodItems.length}</Text>
-                <Text style={styles.statLabel}>Menu Items</Text>
+              <View style={[styles.statCard, { backgroundColor: '#fce7f3' }]}>
+                <View style={styles.statHeader}>
+                  <UsersIcon size={24} color="#db2777" />
+                </View>
+                <Text style={styles.statValue}>R{stats.avgOrderValue.toFixed(0)}</Text>
+                <Text style={styles.statLabel}>Avg. Order Value</Text>
               </View>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Order Status Distribution</Text>
-              <View style={styles.statusChart}>
-                {Object.entries(stats.statusCounts).map(([status, count]) => {
-                  const color = statusColors[status] || statusColors.pending;
-                  return (
-                    <View key={status} style={styles.statusItem}>
-                      <View style={[styles.statusDot, { backgroundColor: color.text }]} />
-                      <Text style={styles.statusName}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </Text>
-                      <Text style={styles.statusCount}>{count}</Text>
-                    </View>
-                  );
-                })}
-              </View>
+            <View style={styles.chartSection}>
+              <Text style={styles.chartTitle}>Revenue (Last 7 Days)</Text>
+              <BarChart
+                data={{
+                  labels: stats.last7Days.map(d => d.slice(-2)),
+                  datasets: [{ data: stats.dailyRevenue.length > 0 ? stats.dailyRevenue : [0] }],
+                }}
+                width={screenWidth - 64}
+                height={200}
+                yAxisLabel="R"
+                yAxisSuffix=""
+                chartConfig={{
+                  ...chartConfig,
+                  color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+                }}
+                style={styles.chart}
+              />
             </View>
+
+            {pieData.length > 0 && (
+              <View style={styles.chartSection}>
+                <Text style={styles.chartTitle}>Order Status Distribution</Text>
+                <PieChart
+                  data={pieData}
+                  width={screenWidth - 64}
+                  height={200}
+                  chartConfig={chartConfig}
+                  accessor="count"
+                  backgroundColor="transparent"
+                  paddingLeft="15"
+                />
+              </View>
+            )}
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Top Selling Items</Text>
               {stats.topItems.map((item, index) => (
                 <View key={item.name} style={styles.topItem}>
-                  <Text style={styles.topItemRank}>{index + 1}</Text>
+                  <View style={styles.topItemRank}>
+                    <Text style={styles.topItemRankText}>{index + 1}</Text>
+                  </View>
                   <View style={styles.topItemInfo}>
                     <Text style={styles.topItemName}>{item.name}</Text>
                     <Text style={styles.topItemSales}>{item.quantity} sold</Text>
                   </View>
-                  <Text style={styles.topItemRevenue}>R{item.revenue.toFixed(2)}</Text>
+                  <Text style={styles.topItemRevenue}>R{item.revenue.toFixed(0)}</Text>
                 </View>
               ))}
+              {stats.topItems.length === 0 && (
+                <Text style={styles.emptyText}>No sales data yet</Text>
+              )}
             </View>
           </>
         )}
@@ -157,14 +273,27 @@ export default function AdminDashboard() {
         {activeTab === 'orders' && (
           <View style={styles.ordersList}>
             {orders.length === 0 ? (
-              <Text style={styles.emptyText}>No orders yet</Text>
+              <View style={styles.emptyState}>
+                <OrdersIcon size={48} color="#d1d5db" />
+                <Text style={styles.emptyTitle}>No orders yet</Text>
+                <Text style={styles.emptyText}>Orders will appear here</Text>
+              </View>
             ) : (
               orders.map((order) => {
                 const statusColor = statusColors[order.status] || statusColors.pending;
+                const orderDate = new Date(order.createdAt).toLocaleDateString('en-ZA', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
                 return (
                   <View key={order.id} style={styles.orderCard}>
                     <View style={styles.orderHeader}>
-                      <Text style={styles.orderId}>#{order.id.slice(-6)}</Text>
+                      <View>
+                        <Text style={styles.orderId}>#{order.id.slice(-6)}</Text>
+                        <Text style={styles.orderDate}>{orderDate}</Text>
+                      </View>
                       <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
                         <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>
                           {order.status}
@@ -174,8 +303,22 @@ export default function AdminDashboard() {
                     <Text style={styles.orderCustomer}>
                       {order.userName || 'Unknown'} - {order.userContact || 'N/A'}
                     </Text>
-                    <Text style={styles.orderAddress}>{order.deliveryAddress}</Text>
-                    <Text style={styles.orderTotal}>R{order.total.toFixed(2)}</Text>
+                    <Text style={styles.orderAddress} numberOfLines={1}>{order.deliveryAddress}</Text>
+                    
+                    <View style={styles.orderItems}>
+                      {order.items.slice(0, 2).map((item, idx) => (
+                        <Text key={idx} style={styles.orderItemText}>
+                          {item.quantity}x {item.foodItem.name}
+                        </Text>
+                      ))}
+                      {order.items.length > 2 && (
+                        <Text style={styles.moreItems}>+{order.items.length - 2} more</Text>
+                      )}
+                    </View>
+
+                    <View style={styles.orderFooter}>
+                      <Text style={styles.orderTotal}>R{order.total.toFixed(2)}</Text>
+                    </View>
                     
                     {order.status !== 'delivered' && order.status !== 'cancelled' && (
                       <View style={styles.statusButtons}>
@@ -192,7 +335,7 @@ export default function AdminDashboard() {
                             style={[styles.statusButton, { backgroundColor: '#db2777' }]}
                             onPress={() => handleStatusUpdate(order.id, 'preparing')}
                           >
-                            <Text style={styles.statusButtonText}>Start Preparing</Text>
+                            <Text style={styles.statusButtonText}>Preparing</Text>
                           </TouchableOpacity>
                         )}
                         {order.status === 'preparing' && (
@@ -228,11 +371,23 @@ export default function AdminDashboard() {
 
         {activeTab === 'items' && (
           <View style={styles.itemsList}>
+            <TouchableOpacity 
+              style={styles.addItemButton}
+              onPress={() => Alert.alert('Coming Soon', 'Add new menu item functionality will be available soon!')}
+            >
+              <PlusIcon size={20} color="#fff" />
+              <Text style={styles.addItemButtonText}>Add New Item</Text>
+            </TouchableOpacity>
+
             {categories.map((category) => (
               <View key={category.id} style={styles.categorySection}>
-                <Text style={styles.categoryTitle}>
-                  {category.icon} {category.name}
-                </Text>
+                <View style={styles.categoryHeader}>
+                  {getCategoryIcon(category.id, 24, '#11181C')}
+                  <Text style={styles.categoryTitle}>{category.name}</Text>
+                  <Text style={styles.categoryCount}>
+                    {foodItems.filter(i => i.categoryId === category.id).length} items
+                  </Text>
+                </View>
                 {foodItems
                   .filter((item) => item.categoryId === category.id)
                   .map((item) => (
@@ -244,10 +399,81 @@ export default function AdminDashboard() {
                         </Text>
                       </View>
                       <Text style={styles.menuItemPrice}>R{item.price.toFixed(2)}</Text>
+                      <View style={styles.menuItemActions}>
+                        <TouchableOpacity style={styles.menuItemAction}>
+                          <EditIcon size={16} color="#3b82f6" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.menuItemAction}>
+                          <TrashIcon size={16} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   ))}
               </View>
             ))}
+          </View>
+        )}
+
+        {activeTab === 'settings' && (
+          <View style={styles.settingsContent}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Restaurant Information</Text>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Restaurant Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={restaurantInfo.name}
+                  onChangeText={(text) => setRestaurantInfo({...restaurantInfo, name: text})}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Address</Text>
+                <TextInput
+                  style={[styles.input, { minHeight: 80 }]}
+                  value={restaurantInfo.address}
+                  onChangeText={(text) => setRestaurantInfo({...restaurantInfo, address: text})}
+                  multiline
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Phone Number</Text>
+                <TextInput
+                  style={styles.input}
+                  value={restaurantInfo.phone}
+                  onChangeText={(text) => setRestaurantInfo({...restaurantInfo, phone: text})}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  value={restaurantInfo.email}
+                  onChangeText={(text) => setRestaurantInfo({...restaurantInfo, email: text})}
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Opening Hours</Text>
+                <TextInput
+                  style={styles.input}
+                  value={restaurantInfo.openingHours}
+                  onChangeText={(text) => setRestaurantInfo({...restaurantInfo, openingHours: text})}
+                />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.saveButton}
+                onPress={handleSaveRestaurantInfo}
+              >
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -266,14 +492,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 10,
+    padding: 16,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
   },
-  backButton: {
-    fontSize: 16,
-    color: '#3b82f6',
-    fontWeight: '500',
+  headerButton: {
+    padding: 8,
   },
   title: {
     fontSize: 20,
@@ -283,23 +508,26 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     gap: 8,
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#f3f4f6',
   },
   tabActive: {
     backgroundColor: '#11181C',
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
     color: '#6b7280',
   },
   tabTextActive: {
@@ -317,14 +545,11 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+  },
+  statHeader: {
+    marginBottom: 12,
   },
   statValue: {
     fontSize: 24,
@@ -335,6 +560,21 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 13,
     color: '#6b7280',
+  },
+  chartSection: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#11181C',
+    marginBottom: 16,
+  },
+  chart: {
+    borderRadius: 12,
   },
   section: {
     backgroundColor: '#fff',
@@ -348,29 +588,6 @@ const styles = StyleSheet.create({
     color: '#11181C',
     marginBottom: 16,
   },
-  statusChart: {
-    gap: 12,
-  },
-  statusItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  statusName: {
-    flex: 1,
-    fontSize: 14,
-    color: '#374151',
-  },
-  statusCount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#11181C',
-  },
   topItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -379,16 +596,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6',
   },
   topItemRank: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#f3f4f6',
-    textAlign: 'center',
-    lineHeight: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  topItemRankText: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#6b7280',
-    marginRight: 12,
   },
   topItemInfo: {
     flex: 1,
@@ -410,10 +629,20 @@ const styles = StyleSheet.create({
   ordersList: {
     gap: 12,
   },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
+  },
   emptyText: {
-    textAlign: 'center',
+    fontSize: 14,
     color: '#6b7280',
-    paddingVertical: 40,
+    marginTop: 4,
   },
   orderCard: {
     backgroundColor: '#fff',
@@ -423,13 +652,18 @@ const styles = StyleSheet.create({
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   orderId: {
     fontSize: 16,
     fontWeight: '600',
     color: '#11181C',
+  },
+  orderDate: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 2,
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -449,21 +683,40 @@ const styles = StyleSheet.create({
   orderAddress: {
     fontSize: 13,
     color: '#6b7280',
-    marginBottom: 8,
+    marginTop: 2,
+  },
+  orderItems: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  orderItemText: {
+    fontSize: 13,
+    color: '#374151',
+    marginBottom: 2,
+  },
+  moreItems: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontStyle: 'italic',
+  },
+  orderFooter: {
+    marginTop: 12,
   },
   orderTotal: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#11181C',
-    marginBottom: 12,
   },
   statusButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginTop: 12,
   },
   statusButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
@@ -473,14 +726,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   itemsList: {},
+  addItemButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#11181C',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  addItemButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   categorySection: {
     marginBottom: 24,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
   },
   categoryTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#11181C',
-    marginBottom: 12,
+    flex: 1,
+  },
+  categoryCount: {
+    fontSize: 13,
+    color: '#6b7280',
   },
   menuItem: {
     flexDirection: 'row',
@@ -488,6 +766,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 8,
+    alignItems: 'center',
   },
   menuItemInfo: {
     flex: 1,
@@ -506,5 +785,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#11181C',
+    marginRight: 12,
+  },
+  menuItemActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  menuItemAction: {
+    padding: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+  },
+  settingsContent: {},
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#11181C',
+  },
+  saveButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

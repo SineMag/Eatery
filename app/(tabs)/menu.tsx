@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { categories, foodItems, getCategoryById } from '@/src/data/menuData';
+import { getCategoryIcon, ChevronRightIcon } from '@/src/components/Icons';
 
 export default function MenuScreen() {
   const router = useRouter();
@@ -66,7 +67,7 @@ export default function MenuScreen() {
                 ]}
                 onPress={() => setSelectedCategory(category.id)}
               >
-                <Text style={styles.categoryEmoji}>{category.icon}</Text>
+                {getCategoryIcon(category.id, 18, selectedCategory === category.id ? '#fff' : '#11181C')}
                 <Text
                   style={[
                     styles.categoryChipText,
@@ -109,7 +110,8 @@ export default function MenuScreen() {
                     style={styles.viewButton}
                     onPress={() => router.push(`/item/${item.id}`)}
                   >
-                    <Text style={styles.viewButtonText}>View Item</Text>
+                    <Text style={styles.viewButtonText}>View</Text>
+                    <ChevronRightIcon size={14} color="#fff" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -163,9 +165,6 @@ const styles = StyleSheet.create({
   categoryChipActive: {
     backgroundColor: '#11181C',
     borderColor: '#11181C',
-  },
-  categoryEmoji: {
-    fontSize: 16,
   },
   categoryChipText: {
     fontSize: 14,
@@ -242,8 +241,11 @@ const styles = StyleSheet.create({
     color: '#11181C',
   },
   viewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#11181C',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },

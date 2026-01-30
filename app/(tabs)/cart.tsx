@@ -12,6 +12,14 @@ import {
 import { useRouter } from 'expo-router';
 import { useCart } from '@/src/contexts/CartContext';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { 
+  EmptyCartIcon, 
+  TrashIcon, 
+  EditIcon, 
+  PlusIcon, 
+  MinusIcon,
+  CartIcon 
+} from '@/src/components/Icons';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -45,6 +53,21 @@ export default function CartScreen() {
     );
   };
 
+  const handleRemoveItem = (itemId: string, itemName: string) => {
+    Alert.alert(
+      'Remove Item',
+      `Are you sure you want to remove ${itemName} from your cart?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeItem(itemId) },
+      ]
+    );
+  };
+
+  const handleEditItem = (itemId: string) => {
+    router.push(`/edit-cart-item/${itemId}`);
+  };
+
   const subtotal = getTotal();
   const deliveryFee = 25;
   const tax = subtotal * 0.15;
@@ -57,7 +80,7 @@ export default function CartScreen() {
           <Text style={styles.title}>Cart</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🛒</Text>
+          <EmptyCartIcon size={80} color="#d1d5db" />
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
           <Text style={styles.emptyText}>
             Add some delicious items to get started!
@@ -76,9 +99,13 @@ export default function CartScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Cart</Text>
-        <TouchableOpacity onPress={handleClearCart}>
-          <Text style={styles.clearButton}>Clear All</Text>
+        <View style={styles.headerLeft}>
+          <CartIcon size={24} color="#11181C" />
+          <Text style={styles.title}>Cart</Text>
+        </View>
+        <TouchableOpacity onPress={handleClearCart} style={styles.clearButton}>
+          <TrashIcon size={18} color="#ef4444" />
+          <Text style={styles.clearButtonText}>Clear All</Text>
         </TouchableOpacity>
       </View>
 
@@ -90,7 +117,23 @@ export default function CartScreen() {
               style={styles.itemImage}
             />
             <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>{item.foodItem.name}</Text>
+              <View style={styles.itemHeader}>
+                <Text style={styles.itemName}>{item.foodItem.name}</Text>
+                <View style={styles.itemActions}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleEditItem(item.id)}
+                  >
+                    <EditIcon size={16} color="#3b82f6" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleRemoveItem(item.id, item.foodItem.name)}
+                  >
+                    <TrashIcon size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              </View>
               <View style={styles.customizations}>
                 {item.customization.selectedSides.length > 0 && (
                   <Text style={styles.customizationText}>
@@ -120,24 +163,18 @@ export default function CartScreen() {
                     style={styles.quantityButton}
                     onPress={() => updateQuantity(item.id, item.quantity - 1)}
                   >
-                    <Text style={styles.quantityButtonText}>-</Text>
+                    <MinusIcon size={16} color="#11181C" />
                   </TouchableOpacity>
                   <Text style={styles.quantityText}>{item.quantity}</Text>
                   <TouchableOpacity
                     style={styles.quantityButton}
                     onPress={() => updateQuantity(item.id, item.quantity + 1)}
                   >
-                    <Text style={styles.quantityButtonText}>+</Text>
+                    <PlusIcon size={16} color="#11181C" />
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => removeItem(item.id)}
-            >
-              <Text style={styles.removeButtonText}>×</Text>
-            </TouchableOpacity>
           </View>
         ))}
         <View style={{ height: 20 }} />
@@ -180,12 +217,26 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 10,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#11181C',
   },
   clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fef2f2',
+    borderRadius: 8,
+  },
+  clearButtonText: {
     fontSize: 14,
     color: '#ef4444',
     fontWeight: '500',
@@ -196,14 +247,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#11181C',
+    marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
@@ -240,20 +288,34 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   itemImage: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
     borderRadius: 12,
     backgroundColor: '#f3f4f6',
   },
   itemInfo: {
     flex: 1,
     marginLeft: 12,
+  },
+  itemHeader: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   itemName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#11181C',
+    flex: 1,
+  },
+  itemActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    padding: 6,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
   },
   customizations: {
     marginTop: 4,
@@ -279,32 +341,19 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   quantityButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  quantityButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#11181C',
   },
   quantityText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#11181C',
-    minWidth: 20,
+    minWidth: 24,
     textAlign: 'center',
-  },
-  removeButton: {
-    padding: 4,
-  },
-  removeButtonText: {
-    fontSize: 24,
-    color: '#9ca3af',
-    fontWeight: '300',
   },
   summary: {
     backgroundColor: '#fff',

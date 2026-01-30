@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { CloseIcon } from '@/src/components/Icons';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -92,7 +93,7 @@ export default function RegisterScreen() {
             style={styles.closeButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.closeButtonText}>×</Text>
+            <CloseIcon size={28} color="#6b7280" />
           </TouchableOpacity>
 
           <View style={styles.header}>
@@ -271,11 +272,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     padding: 8,
     marginLeft: -8,
-  },
-  closeButtonText: {
-    fontSize: 32,
-    color: '#6b7280',
-    fontWeight: '300',
   },
   header: {
     marginTop: 16,

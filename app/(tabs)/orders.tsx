@@ -10,6 +10,11 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useOrders } from '@/src/contexts/OrderContext';
+import { 
+  EmptyOrdersIcon, 
+  ChevronRightIcon,
+  OrdersIcon 
+} from '@/src/components/Icons';
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   pending: { bg: '#fef3c7', text: '#d97706' },
@@ -29,10 +34,11 @@ export default function OrdersScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
+          <OrdersIcon size={24} color="#11181C" />
           <Text style={styles.title}>Orders</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📦</Text>
+          <EmptyOrdersIcon size={80} color="#d1d5db" />
           <Text style={styles.emptyTitle}>Sign in to view orders</Text>
           <Text style={styles.emptyText}>
             Please sign in to see your order history.
@@ -54,10 +60,11 @@ export default function OrdersScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
+          <OrdersIcon size={24} color="#11181C" />
           <Text style={styles.title}>Orders</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📦</Text>
+          <EmptyOrdersIcon size={80} color="#d1d5db" />
           <Text style={styles.emptyTitle}>No orders yet</Text>
           <Text style={styles.emptyText}>
             Start ordering to see your order history here!
@@ -76,7 +83,10 @@ export default function OrdersScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Orders</Text>
+        <View style={styles.headerLeft}>
+          <OrdersIcon size={24} color="#11181C" />
+          <Text style={styles.title}>Orders</Text>
+        </View>
         <Text style={styles.subtitle}>{userOrders.length} orders</Text>
       </View>
 
@@ -128,7 +138,10 @@ export default function OrdersScreen() {
 
               <View style={styles.orderFooter}>
                 <Text style={styles.orderTotal}>R{order.total.toFixed(2)}</Text>
-                <Text style={styles.viewDetails}>View Details →</Text>
+                <View style={styles.viewDetails}>
+                  <Text style={styles.viewDetailsText}>View Details</Text>
+                  <ChevronRightIcon size={16} color="#3b82f6" />
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -145,8 +158,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     paddingBottom: 10,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   title: {
     fontSize: 28,
@@ -156,7 +177,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#6b7280',
-    marginTop: 4,
   },
   emptyContainer: {
     flex: 1,
@@ -164,14 +184,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#11181C',
+    marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
@@ -270,6 +287,11 @@ const styles = StyleSheet.create({
     color: '#11181C',
   },
   viewDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewDetailsText: {
     fontSize: 14,
     color: '#3b82f6',
     fontWeight: '500',
