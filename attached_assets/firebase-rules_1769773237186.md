@@ -1,0 +1,185 @@
+# Firebase Backend API Documentation
+
+## Overview
+
+This React Native app uses Firebase as the backend. Firebase provides:
+
+- **Authentication**: Email/password user management
+- **Firestore Database**: NoSQL document database for orders, users, and menu items
+- **Storage**: File storage for images (if needed)
+
+## Firebase Configuration
+
+The app is configured with the following Firebase project:
+
+- **Project ID**: eatery-45672
+- **Auth Domain**: eatery-45672.firebaseapp.com
+- **Storage Bucket**: eatery-45672.firebasestorage.app
+
+## Testing with Postman
+
+### Authentication Endpoints
+
+Firebase Authentication doesn't have traditional REST endpoints for testing with Postman. Instead, you need to:
+
+1. **Get Firebase Auth Token**:
+   - Use the Firebase Auth REST API: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword`
+   - Request body:
+     ```json
+     {
+       "email": "test@example.com",
+       "password": "password123",
+       "returnSecureToken": true
+     }
+     ```
+   - Include API key: `?key=AIzaSyBRrqSIfEQKqBIb631Z0yIcMtNlnuaIMLQ`
+
+2. **Use Token for Firestore Requests**:
+   - Include the ID token in Authorization header: `Bearer <id_token>`
+
+### Firestore REST API
+
+#### Base URL
+
+```
+https://firestore.googleapis.com/v1/projects/eatery-45672/databases/(default)/documents
+```
+
+#### Collections
+
+**Users Collection**: `users`
+
+```json
+{
+  "fields": {
+    "uid": { "stringValue": "user123" },
+    "email": { "stringValue": "user@example.com" },
+    "name": { "stringValue": "John" },
+    "surname": { "stringValue": "Doe" },
+    "contactNumber": { "stringValue": "+1234567890" },
+    "address": { "stringValue": "123 Main St" },
+    "createdAt": { "timestampValue": "2024-01-20T12:00:00Z" }
+  }
+}
+```
+
+**Orders Collection**: `orders`
+
+```json
+{
+  "fields": {
+    "userId": { "stringValue": "user123" },
+    "status": { "stringValue": "confirmed" },
+    "total": { "doubleValue": 25.98 },
+    "deliveryAddress": { "stringValue": "123 Main St" },
+    "paymentMethod": { "stringValue": "Visa •••• 4242" },
+    "createdAt": { "timestampValue": "2024-01-20T12:00:00Z" },
+    "items": {
+      "arrayValue": {
+        "values": [
+          {
+            "mapValue": {
+              "fields": {
+                "name": { "stringValue": "Classic Burger" },
+                "quantity": { "integerValue": "2" },
+                "price": { "doubleValue": 12.99 }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+**Food Items Collection**: `foodItems`
+
+```json
+{
+  "fields": {
+    "name": { "stringValue": "Classic Burger" },
+    "description": { "stringValue": "Juicy beef patty with lettuce, tomato" },
+    "price": { "doubleValue": 12.99 },
+    "imageUrl": { "stringValue": "https://example.com/image.jpg" },
+    "categoryId": { "stringValue": "6" }
+  }
+}
+```
+
+### API Endpoints
+
+#### GET Documents
+
+```
+GET https://firestore.googleapis.com/v1/projects/eatery-45672/databases/(default)/documents/{collectionPath}
+```
+
+#### POST Document
+
+```
+POST https://firestore.googleapis.com/v1/projects/eatery-45672/databases/(default)/documents/{collectionPath}
+```
+
+#### PATCH Document
+
+```
+PATCH https://firestore.googleapis.com/v1/projects/eatery-45672/databases/(default)/documents/{collectionPath}/{documentId}
+```
+
+#### DELETE Document
+
+```
+DELETE https://firestore.googleapis.com/v1/projects/eatery-45672/databases/(default)/documents/{collectionPath}/{documentId}
+```
+
+### Postman Setup
+
+1. **Create a new collection** called "Eatery API"
+
+2. **Authentication Request**:
+   - Method: POST
+   - URL: `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBRrqSIfEQKqBIb631Z0yIcMtNlnuaIMLQ`
+   - Headers: `Content-Type: application/json`
+   - Body:
+     ```json
+     {
+       "email": "your-test-email@example.com",
+       "password": "your-test-password",
+       "returnSecureToken": true
+     }
+     ```
+
+3. **Firestore Requests**:
+   - Add Authorization header: `Bearer {{id_token}}`
+   - Use the Firestore REST API endpoints above
+
+### Current Implementation Status
+
+**✅ Implemented:**
+
+- Firebase client configuration
+- Authentication context and screens
+- Firestore database setup
+- Mock data in app screens
+
+**❌ Not Implemented:**
+
+- Actual Firestore operations (currently using mock data)
+- Firebase security rules
+- Real-time data synchronization
+- Admin dashboard
+
+### Next Steps for Full Backend
+
+1. **Replace Mock Data**: Update screens to use real Firestore operations
+2. **Add Security Rules**: Configure Firestore security rules
+3. **Create Admin Functions**: Add cloud functions for admin operations
+4. **Real-time Updates**: Implement real-time order status updates
+
+### Firebase Console Access
+
+- Project URL: https://console.firebase.google.com/project/eatery-45672
+- You can view data, users, and configure settings there
+
+The backend is partially implemented with Firebase setup complete, but the app currently uses mock data. To test with Postman, you'll need to use the Firebase REST API endpoints with proper authentication.
