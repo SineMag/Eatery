@@ -1,0 +1,77 @@
+{
+  "expo": {
+    "name": "Eatery",
+    "slug": "Eatery",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/Eatery Logo.png",
+    "scheme": "eatery",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#11181C",
+        "foregroundImage": "./assets/images/Eatery Logo.png",
+        "backgroundImage": "./assets/images/Eatery Logo.png",
+        "monochromeImage": "./assets/images/Eatery Logo.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/Eatery Logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/Eatery Logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#11181C",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      },
+      "firebase": {
+        "apiKey": "AIzaSyBRrqSIfEQKqBIb631Z0yIcMtNlnuaIMLQ",
+        "authDomain": "eatery-45672.firebaseapp.com",
+        "projectId": "eatery-45672",
+        "storageBucket": "eatery-45672.firebasestorage.app",
+        "messagingSenderId": "306837127782",
+        "appId": "1:306837127782:web:57f21d73dc805ef52523a7",
+        "measurementId": "G-XXXXXXXXXX"
+      },
+      "googlePlaces": {
+        "apiKey": "YOUR_GOOGLE_PLACES_API_KEY_HERE"
+      }
+    }
+  }
+}

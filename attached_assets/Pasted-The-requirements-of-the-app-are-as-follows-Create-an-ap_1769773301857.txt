@@ -1,0 +1,98 @@
+The requirements of the app are as follows:
+Create an application that
+Allows users to be able to register, login and update their profiles on the application.
+Views food menus
+View a food item
+Add items to cart
+View cart
+Remove items from the cart
+Clears the cart
+Goes to checkout
+Places an order
+Registration
+Users should be able to register on the application using at least one type of sign-in provider eg email and password
+Contact details should be requested during the registration process, include
+Name
+Surname
+Contact number
+Address
+Card details (You can use fake cards for testing purposes)
+Users not registered should not be able to make orders.
+Logging in
+Users should be able to login with at least [but not limited to] one sign-in provider, eg Email and Password
+Profile
+Users should be able to update the following details on their profiles:
+Name
+Email
+Address
+Contact number
+Card details
+Only registered users should have access to the profile screen
+Users profiles should be connected to the orders that they make, eg by collecting UID during order submissions, (name, surname, contact details can also be included with the submission)
+Viewing food menus, Home Screen
+All users should be able to browse the app for the foods that the restaurant offers.
+The food should be divided according to food type eg Dessert, Beverages, Alcohols, Burgers, Mains, Starters (You will decide how deep the division is)
+Users should be able to see the following details about food items:
+Name
+Description (this can include the ingredients the item has)
+Price
+Image
+There should be a button that navigates to the View Item Screen
+Viewing food item details, View Item Screen
+The details that were shown on the home screen should be shown here as well, including
+Name
+Description (this can include the ingredients the item has)
+Price
+Image
+Users should be able to add the item to the cart, they can customise their orders before placing the order to the cart using side options, extras. Example below
+Any side options the item has eg pap, chips, salads. Users can select either two sides or one side to include with the order. Price is already included in the total item price for this option.
+Any drink options that the food item has, prices can either be included or be an add-on.
+Any extras they can add to the order, eg another side of chips, sauces, salads, drinks etc. Price for this item should be an add on, meaning selecting an item from this extras actually adds money to the already calculated total
+Any optional ingredients that you want to remove or add from or to the food item eg lettuces being an option when choosing a burger
+A quantity option should be given to the user, to add multiples of the item with the same exact options
+The above are only an example that online restaurants tend to have to allow users as much freedom on the orders they make. You can switch up the options how you wish according to your food items and preferences. Just remember to give the user freedom on their order. 
+Viewing a cart
+Users should be able to view the current items on the cart
+Users should be able to edit the quantity of the items on the cart
+Users should be able to remove a single item from the cart
+Users should be able to navigate to a different page to edit the extras chosen for the chosen item
+Users should be able to clear the whole cart
+Users should be able to navigate to the Checkout screen, checking out should be limited to registered users only. A prompt to register/sign-in can be added on this screen for users who are not logged in. 
+Checking out
+Users should be able to change the drop-off address to a different location from this screen. The one registered with can be used as a default address.
+Users should be able to see the total of their order
+Users should be able to select/change their card from this screen.
+There should be a button that allows users to place an order
+Placing an order
+All the details about the order are added to the database to start processing the order.
+You can use any payment API, SDK you wish to process the order. Most APIs have a development account for testing which is free to use. 
+
+Admin Dashboard:
+Create a separate admin dashboard for admins to manage food items and restaurant details.
+Analyse and represent data in charts for the admin.
+Include features for adding and updating restaurant information, managing food items, and viewing order history.
+
+Links:
+React Native: https://reactnative.dev/docs/environment-setup
+React Native Elements: https://reactnativeelements.com/
+VCC Cards: https://www.vccgenerator.org/
+Stripe: https://api.stripe.com/v1/customers
+PayPal: https://developer.paypal.com/dashboard/
+
+
+Instructions:
+Create a React Native application that meets the above requirements
+Make use of reusable React Native components wherever applicable.
+You are allowed to use libraries in this project as long as they do not get in the way of you addressing the requirements of the app. Eg React Native Elements
+Other APIs may be used in the project as long as the core functionality stated in the requirements have been covered and work accordingly. You are not limited to just the mentioned APIs in this document.
+You are to submit in the form of links. Sending code files directly to my email or slack will not count as a submission.
+Design and plan your restaurant application. Add the design link to your repo’s README
+
+
+Evaluation Criteria:
+Adherence to the requirements outlined in the specification.
+User interface design and visual appeal.
+Reusability of React Native components
+CRUD operations functionality for making viewing items and placing an order
+Code quality, organization, and adherence to best practices.
+Overall functionality and usefulness of the ap
