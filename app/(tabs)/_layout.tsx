@@ -4,21 +4,38 @@ import { Platform, View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useCart } from '@/src/contexts/CartContext';
+import { 
+  HomeIcon, 
+  MenuIcon, 
+  CartIcon, 
+  OrdersIcon, 
+  ProfileIcon 
+} from '@/src/components/Icons';
 
-function TabIcon({ name, color, badge }: { name: string; color: string; badge?: number }) {
-  const icons: Record<string, string> = {
-    home: '🏠',
-    menu: '📋',
-    cart: '🛒',
-    orders: '📦',
-    profile: '👤',
+function TabIcon({ name, color, focused, badge }: { name: string; color: string; focused: boolean; badge?: number }) {
+  const iconColor = focused ? '#11181C' : '#9ca3af';
+  const size = 24;
+  
+  const renderIcon = () => {
+    switch (name) {
+      case 'home':
+        return <HomeIcon size={size} color={iconColor} />;
+      case 'menu':
+        return <MenuIcon size={size} color={iconColor} />;
+      case 'cart':
+        return <CartIcon size={size} color={iconColor} />;
+      case 'orders':
+        return <OrdersIcon size={size} color={iconColor} />;
+      case 'profile':
+        return <ProfileIcon size={size} color={iconColor} />;
+      default:
+        return <MenuIcon size={size} color={iconColor} />;
+    }
   };
   
   return (
     <View style={styles.iconContainer}>
-      <Text style={[styles.icon, { opacity: color === Colors.light.tint ? 1 : 0.6 }]}>
-        {icons[name] || '📋'}
-      </Text>
+      {renderIcon()}
       {badge !== undefined && badge > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
@@ -36,7 +53,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#11181C',
+        tabBarInactiveTintColor: '#9ca3af',
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#fff',
@@ -55,35 +73,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon name="home" color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="menu"
         options={{
           title: 'Menu',
-          tabBarIcon: ({ color }) => <TabIcon name="menu" color={color} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon name="menu" color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Cart',
-          tabBarIcon: ({ color }) => <TabIcon name="cart" color={color} badge={cartCount} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon name="cart" color={color} focused={focused} badge={cartCount} />,
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: 'Orders',
-          tabBarIcon: ({ color }) => <TabIcon name="orders" color={color} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon name="orders" color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <TabIcon name="profile" color={color} />,
+          tabBarIcon: ({ color, focused }) => <TabIcon name="profile" color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -99,9 +117,6 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   iconContainer: {
     position: 'relative',
-  },
-  icon: {
-    fontSize: 24,
   },
   badge: {
     position: 'absolute',

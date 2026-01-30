@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useOrders } from '@/src/contexts/OrderContext';
+import { BackIcon, CheckIcon, LocationIcon, CardIcon } from '@/src/components/Icons';
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   pending: { bg: '#fef3c7', text: '#d97706' },
@@ -54,11 +55,11 @@ export default function OrderDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButtonHeader}>← Back</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+          <BackIcon size={24} color="#11181C" />
         </TouchableOpacity>
         <Text style={styles.title}>Order Details</Text>
-        <View style={{ width: 60 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
@@ -88,7 +89,7 @@ export default function OrderDetailScreen() {
                         isCurrent && styles.progressDotCurrent,
                       ]}
                     >
-                      {isCompleted && <Text style={styles.progressCheck}>✓</Text>}
+                      {isCompleted && <CheckIcon size={14} color="#fff" />}
                     </View>
                     <Text
                       style={[
@@ -114,12 +115,18 @@ export default function OrderDetailScreen() {
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Address</Text>
+          <View style={styles.sectionHeader}>
+            <LocationIcon size={20} color="#11181C" />
+            <Text style={styles.sectionTitle}>Delivery Address</Text>
+          </View>
           <Text style={styles.addressText}>{order.deliveryAddress}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
+          <View style={styles.sectionHeader}>
+            <CardIcon size={20} color="#11181C" />
+            <Text style={styles.sectionTitle}>Payment Method</Text>
+          </View>
           <Text style={styles.paymentText}>{order.paymentMethod}</Text>
         </View>
 
@@ -190,14 +197,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 10,
+    padding: 16,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
   },
-  backButtonHeader: {
-    fontSize: 16,
-    color: '#3b82f6',
-    fontWeight: '500',
+  headerButton: {
+    padding: 8,
   },
   title: {
     fontSize: 20,
@@ -264,11 +270,6 @@ const styles = StyleSheet.create({
   progressDotCurrent: {
     backgroundColor: '#3b82f6',
   },
-  progressCheck: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
   progressLabel: {
     fontSize: 10,
     color: '#9ca3af',
@@ -296,11 +297,16 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#11181C',
-    marginBottom: 12,
   },
   addressText: {
     fontSize: 15,

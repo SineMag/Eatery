@@ -11,6 +11,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { 
+  UserOutlineIcon, 
+  ProfileIcon, 
+  EditIcon, 
+  CloseIcon,
+  CheckIcon 
+} from '@/src/components/Icons';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -55,10 +62,11 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
+          <ProfileIcon size={24} color="#11181C" />
           <Text style={styles.title}>Profile</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>👤</Text>
+          <UserOutlineIcon size={80} color="#d1d5db" />
           <Text style={styles.emptyTitle}>Not signed in</Text>
           <Text style={styles.emptyText}>
             Sign in to view and manage your profile.
@@ -85,14 +93,25 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
+        <View style={styles.headerLeft}>
+          <ProfileIcon size={24} color="#11181C" />
+          <Text style={styles.title}>Profile</Text>
+        </View>
         {!isEditing ? (
-          <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text style={styles.editButton}>Edit</Text>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => setIsEditing(true)}
+          >
+            <EditIcon size={18} color="#3b82f6" />
+            <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity onPress={() => setIsEditing(false)}>
-            <Text style={styles.cancelButton}>Cancel</Text>
+          <TouchableOpacity 
+            style={styles.cancelButton}
+            onPress={() => setIsEditing(false)}
+          >
+            <CloseIcon size={18} color="#ef4444" />
+            <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -235,6 +254,7 @@ export default function ProfileScreen() {
 
         {isEditing && (
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <CheckIcon size={20} color="#fff" />
             <Text style={styles.saveButtonText}>Save Changes</Text>
           </TouchableOpacity>
         )}
@@ -261,18 +281,41 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 10,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#11181C',
   },
   editButton: {
-    fontSize: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#eff6ff',
+    borderRadius: 8,
+  },
+  editButtonText: {
+    fontSize: 14,
     color: '#3b82f6',
     fontWeight: '500',
   },
   cancelButton: {
-    fontSize: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fef2f2',
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    fontSize: 14,
     color: '#ef4444',
     fontWeight: '500',
   },
@@ -282,14 +325,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#11181C',
+    marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
@@ -401,10 +441,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: '#10b981',
     paddingVertical: 16,
     borderRadius: 12,
-    alignItems: 'center',
     marginBottom: 12,
   },
   saveButtonText: {

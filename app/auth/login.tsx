@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { CloseIcon, FoodIcon } from '@/src/components/Icons';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -52,11 +53,11 @@ export default function LoginScreen() {
             style={styles.closeButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.closeButtonText}>×</Text>
+            <CloseIcon size={28} color="#6b7280" />
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.logo}>🍽️</Text>
+            <FoodIcon size={64} color="#11181C" />
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to your account</Text>
           </View>
@@ -135,24 +136,16 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: -8,
   },
-  closeButtonText: {
-    fontSize: 32,
-    color: '#6b7280',
-    fontWeight: '300',
-  },
   header: {
     alignItems: 'center',
     marginTop: 40,
     marginBottom: 40,
   },
-  logo: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#11181C',
+    marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {

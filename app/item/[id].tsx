@@ -13,6 +13,13 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getFoodItemById, getCategoryById } from '@/src/data/menuData';
 import { useCart } from '@/src/contexts/CartContext';
 import { SideOption, DrinkOption, ExtraOption, CartItemCustomization } from '@/src/types';
+import { 
+  BackIcon, 
+  PlusIcon, 
+  MinusIcon, 
+  CartIcon,
+  CheckIcon 
+} from '@/src/components/Icons';
 
 export default function ItemDetailScreen() {
   const router = useRouter();
@@ -135,7 +142,7 @@ export default function ItemDetailScreen() {
         <View style={styles.imageContainer}>
           <Image source={{ uri: foodItem.image }} style={styles.image} />
           <TouchableOpacity style={styles.backButtonOverlay} onPress={() => router.back()}>
-            <Text style={styles.backButtonOverlayText}>←</Text>
+            <BackIcon size={24} color="#fff" />
           </TouchableOpacity>
         </View>
 
@@ -156,19 +163,29 @@ export default function ItemDetailScreen() {
               <Text style={styles.sectionTitle}>Choose Your Sides (up to 2)</Text>
               <Text style={styles.sectionSubtitle}>Included with your meal</Text>
               <View style={styles.optionsGrid}>
-                {foodItem.sides.map((side) => (
-                  <TouchableOpacity
-                    key={side.id}
-                    style={[
-                      styles.optionCard,
-                      selectedSides.find((s) => s.id === side.id) && styles.optionCardSelected,
-                    ]}
-                    onPress={() => toggleSide(side)}
-                  >
-                    <Text style={styles.optionName}>{side.name}</Text>
-                    <Text style={styles.optionPrice}>Included</Text>
-                  </TouchableOpacity>
-                ))}
+                {foodItem.sides.map((side) => {
+                  const isSelected = selectedSides.find((s) => s.id === side.id);
+                  return (
+                    <TouchableOpacity
+                      key={side.id}
+                      style={[
+                        styles.optionCard,
+                        isSelected && styles.optionCardSelected,
+                      ]}
+                      onPress={() => toggleSide(side)}
+                    >
+                      <View style={styles.optionContent}>
+                        <Text style={styles.optionName}>{side.name}</Text>
+                        <Text style={styles.optionPrice}>Included</Text>
+                      </View>
+                      {isSelected && (
+                        <View style={styles.checkmark}>
+                          <CheckIcon size={14} color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -177,21 +194,31 @@ export default function ItemDetailScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Choose Your Drinks</Text>
               <View style={styles.optionsGrid}>
-                {foodItem.drinks.map((drink) => (
-                  <TouchableOpacity
-                    key={drink.id}
-                    style={[
-                      styles.optionCard,
-                      selectedDrinks.find((d) => d.id === drink.id) && styles.optionCardSelected,
-                    ]}
-                    onPress={() => toggleDrink(drink)}
-                  >
-                    <Text style={styles.optionName}>{drink.name}</Text>
-                    <Text style={styles.optionPrice}>
-                      {drink.included ? 'Included' : `+R${drink.price.toFixed(2)}`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {foodItem.drinks.map((drink) => {
+                  const isSelected = selectedDrinks.find((d) => d.id === drink.id);
+                  return (
+                    <TouchableOpacity
+                      key={drink.id}
+                      style={[
+                        styles.optionCard,
+                        isSelected && styles.optionCardSelected,
+                      ]}
+                      onPress={() => toggleDrink(drink)}
+                    >
+                      <View style={styles.optionContent}>
+                        <Text style={styles.optionName}>{drink.name}</Text>
+                        <Text style={drink.included ? styles.optionPrice : styles.optionPriceAdd}>
+                          {drink.included ? 'Included' : `+R${drink.price.toFixed(2)}`}
+                        </Text>
+                      </View>
+                      {isSelected && (
+                        <View style={styles.checkmark}>
+                          <CheckIcon size={14} color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -200,19 +227,29 @@ export default function ItemDetailScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Add Extras</Text>
               <View style={styles.optionsGrid}>
-                {foodItem.extras.map((extra) => (
-                  <TouchableOpacity
-                    key={extra.id}
-                    style={[
-                      styles.optionCard,
-                      selectedExtras.find((e) => e.id === extra.id) && styles.optionCardSelected,
-                    ]}
-                    onPress={() => toggleExtra(extra)}
-                  >
-                    <Text style={styles.optionName}>{extra.name}</Text>
-                    <Text style={styles.optionPriceAdd}>+R{extra.price.toFixed(2)}</Text>
-                  </TouchableOpacity>
-                ))}
+                {foodItem.extras.map((extra) => {
+                  const isSelected = selectedExtras.find((e) => e.id === extra.id);
+                  return (
+                    <TouchableOpacity
+                      key={extra.id}
+                      style={[
+                        styles.optionCard,
+                        isSelected && styles.optionCardSelected,
+                      ]}
+                      onPress={() => toggleExtra(extra)}
+                    >
+                      <View style={styles.optionContent}>
+                        <Text style={styles.optionName}>{extra.name}</Text>
+                        <Text style={styles.optionPriceAdd}>+R{extra.price.toFixed(2)}</Text>
+                      </View>
+                      {isSelected && (
+                        <View style={styles.checkmark}>
+                          <CheckIcon size={14} color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -235,7 +272,7 @@ export default function ItemDetailScreen() {
                       onPress={() => toggleIngredient(ingredient)}
                     >
                       <Text style={styles.ingredientName}>
-                        {isRemoved ? '✕ No ' : isAdded ? '✓ Extra ' : ''}
+                        {isRemoved ? 'No ' : isAdded ? 'Extra ' : ''}
                         {ingredient.name}
                       </Text>
                       <Text style={styles.ingredientAction}>
@@ -256,14 +293,14 @@ export default function ItemDetailScreen() {
                 style={styles.quantityButton}
                 onPress={() => setQuantity((q) => Math.max(1, q - 1))}
               >
-                <Text style={styles.quantityButtonText}>-</Text>
+                <MinusIcon size={20} color="#11181C" />
               </TouchableOpacity>
               <Text style={styles.quantityText}>{quantity}</Text>
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => setQuantity((q) => q + 1)}
               >
-                <Text style={styles.quantityButtonText}>+</Text>
+                <PlusIcon size={20} color="#11181C" />
               </TouchableOpacity>
             </View>
           </View>
@@ -278,6 +315,7 @@ export default function ItemDetailScreen() {
           <Text style={styles.totalPrice}>R{totalPrice.toFixed(2)}</Text>
         </View>
         <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
+          <CartIcon size={20} color="#fff" />
           <Text style={styles.addToCartButtonText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
@@ -322,17 +360,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  backButtonOverlayText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
   },
   content: {
     padding: 20,
@@ -391,6 +424,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#f9fafb',
     borderWidth: 2,
     borderColor: '#e5e5e5',
@@ -402,6 +438,9 @@ const styles = StyleSheet.create({
   optionCardSelected: {
     borderColor: '#11181C',
     backgroundColor: '#f0f9ff',
+  },
+  optionContent: {
+    flex: 1,
   },
   optionName: {
     fontSize: 14,
@@ -417,6 +456,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#10b981',
     fontWeight: '500',
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#11181C',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   ingredientsList: {
     marginTop: 12,
@@ -457,20 +504,15 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   quantityButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  quantityButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#11181C',
-  },
   quantityText: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#11181C',
     minWidth: 48,
@@ -508,11 +550,13 @@ const styles = StyleSheet.create({
   },
   addToCartButton: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
     backgroundColor: '#11181C',
     paddingVertical: 16,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   addToCartButtonText: {
     color: '#fff',

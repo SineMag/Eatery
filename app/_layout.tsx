@@ -20,6 +20,7 @@ export default function RootLayout() {
               <Stack.Screen name="auth/login" options={{ presentation: 'modal' }} />
               <Stack.Screen name="auth/register" options={{ presentation: 'modal' }} />
               <Stack.Screen name="item/[id]" options={{ presentation: 'card' }} />
+              <Stack.Screen name="edit-cart-item/[id]" options={{ presentation: 'modal' }} />
               <Stack.Screen name="checkout" options={{ presentation: 'card' }} />
               <Stack.Screen name="order/[id]" options={{ presentation: 'card' }} />
               <Stack.Screen name="admin" options={{ presentation: 'card' }} />

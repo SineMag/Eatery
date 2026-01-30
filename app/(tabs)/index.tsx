@@ -11,6 +11,12 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { categories, foodItems } from '@/src/data/menuData';
+import { 
+  getCategoryIcon, 
+  PlusIcon, 
+  AdminIcon,
+  ChevronRightIcon 
+} from '@/src/components/Icons';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -33,6 +39,7 @@ export default function HomeScreen() {
               style={styles.adminButton}
               onPress={() => router.push('/admin')}
             >
+              <AdminIcon size={18} color="#fff" />
               <Text style={styles.adminButtonText}>Admin</Text>
             </TouchableOpacity>
           )}
@@ -49,7 +56,7 @@ export default function HomeScreen() {
                   onPress={() => router.push(`/menu?category=${category.id}`)}
                 >
                   <View style={styles.categoryIconContainer}>
-                    <Text style={styles.categoryIcon}>{category.icon}</Text>
+                    {getCategoryIcon(category.id, 28, '#11181C')}
                   </View>
                   <Text style={styles.categoryName}>{category.name}</Text>
                 </TouchableOpacity>
@@ -61,8 +68,12 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured Items</Text>
-            <TouchableOpacity onPress={() => router.push('/menu')}>
+            <TouchableOpacity 
+              style={styles.seeAllButton}
+              onPress={() => router.push('/menu')}
+            >
               <Text style={styles.seeAll}>See All</Text>
+              <ChevronRightIcon size={16} color="#3b82f6" />
             </TouchableOpacity>
           </View>
           <View style={styles.itemsGrid}>
@@ -86,7 +97,7 @@ export default function HomeScreen() {
                       style={styles.addButton}
                       onPress={() => router.push(`/item/${item.id}`)}
                     >
-                      <Text style={styles.addButtonText}>+</Text>
+                      <PlusIcon size={18} color="#fff" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -168,14 +179,18 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   adminButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: '#11181C',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   adminButtonText: {
     color: '#fff',
     fontWeight: '600',
+    fontSize: 14,
   },
   section: {
     marginBottom: 24,
@@ -193,6 +208,11 @@ const styles = StyleSheet.create({
     color: '#11181C',
     paddingHorizontal: 20,
     marginBottom: 12,
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   seeAll: {
     fontSize: 14,
@@ -217,16 +237,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   categoryIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  categoryIcon: {
-    fontSize: 24,
   },
   categoryName: {
     fontSize: 12,
@@ -282,18 +299,12 @@ const styles = StyleSheet.create({
     color: '#11181C',
   },
   addButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: '#11181C',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: -2,
   },
   popularRow: {
     flexDirection: 'row',
