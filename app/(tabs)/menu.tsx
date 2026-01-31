@@ -7,17 +7,22 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { categories, foodItems, getCategoryById } from '@/src/data/menuData';
-import { getCategoryIcon, ChevronRightIcon } from '@/src/components/Icons';
+import { ChevronRightIcon } from '@/src/components/Icons';
 
 export default function MenuScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { width } = useWindowDimensions();
   const [selectedCategory, setSelectedCategory] = useState<string>(
     (params.category as string) || ''
   );
+
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1024;
 
   const filteredItems = useMemo(() => {
     if (!selectedCategory) return foodItems;
@@ -30,8 +35,8 @@ export default function MenuScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Menu</Text>
+      <View style={[styles.header, isDesktop && styles.headerDesktop]}>
+        <Text style={[styles.title, isDesktop && styles.titleDesktop]}>Menu</Text>
         <Text style={styles.subtitle}>
           {selectedCategoryData
             ? `${selectedCategoryData.name} (${filteredItems.length} items)`
@@ -67,7 +72,7 @@ export default function MenuScreen() {
                 ]}
                 onPress={() => setSelectedCategory(category.id)}
               >
-                {getCategoryIcon(category.id, 18, selectedCategory === category.id ? '#fff' : '#11181C')}
+                <Text style={styles.categoryEmoji}>{category.icon}</Text>
                 <Text
                   style={[
                     styles.categoryChipText,
@@ -83,41 +88,63 @@ export default function MenuScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.itemsList}>
-        {filteredItems.map((item) => {
-          const category = getCategoryById(item.categoryId);
-          return (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.itemCard}
-              onPress={() => router.push(`/item/${item.id}`)}
-            >
-              <Image source={{ uri: item.image }} style={styles.itemImage} />
-              <View style={styles.itemInfo}>
-                <View style={styles.itemHeader}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  {category && (
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryBadgeText}>{category.name}</Text>
-                    </View>
-                  )}
+        <View style={[
+          styles.itemsContainer,
+          isTablet && styles.itemsContainerTablet,
+          isDesktop && styles.itemsContainerDesktop
+        ]}>
+          {filteredItems.map((item) => {
+            const category = getCategoryById(item.categoryId);
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.itemCard,
+                  isTablet && styles.itemCardTablet,
+                  isDesktop && styles.itemCardDesktop
+                ]}
+                onPress={() => router.push(`/item/${item.id}`)}
+              >
+                <Image 
+                  source={{ uri: item.image }} 
+                  style={[
+                    styles.itemImage,
+                    isTablet && styles.itemImageTablet,
+                    isDesktop && styles.itemImageDesktop
+                  ]} 
+                />
+                <View style={styles.itemInfo}>
+                  <View style={styles.itemHeader}>
+                    <Text style={[styles.itemName, isDesktop && styles.itemNameDesktop]}>
+                      {item.name}
+                    </Text>
+                    {category && (
+                      <View style={styles.categoryBadge}>
+                        <Text style={styles.categoryBadgeEmoji}>{category.icon}</Text>
+                        <Text style={styles.categoryBadgeText}>{category.name}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.itemDescription} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                  <View style={styles.itemFooter}>
+                    <Text style={[styles.itemPrice, isDesktop && styles.itemPriceDesktop]}>
+                      R{item.price.toFixed(2)}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.viewButton}
+                      onPress={() => router.push(`/item/${item.id}`)}
+                    >
+                      <Text style={styles.viewButtonText}>View</Text>
+                      <ChevronRightIcon size={14} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <Text style={styles.itemDescription} numberOfLines={2}>
-                  {item.description}
-                </Text>
-                <View style={styles.itemFooter}>
-                  <Text style={styles.itemPrice}>R{item.price.toFixed(2)}</Text>
-                  <TouchableOpacity
-                    style={styles.viewButton}
-                    onPress={() => router.push(`/item/${item.id}`)}
-                  >
-                    <Text style={styles.viewButtonText}>View</Text>
-                    <ChevronRightIcon size={14} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
         <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>
@@ -133,10 +160,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 10,
   },
+  headerDesktop: {
+    paddingHorizontal: 40,
+    paddingTop: 24,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#11181C',
+  },
+  titleDesktop: {
+    fontSize: 36,
   },
   subtitle: {
     fontSize: 14,
@@ -166,6 +200,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#11181C',
     borderColor: '#11181C',
   },
+  categoryEmoji: {
+    fontSize: 16,
+  },
   categoryChipText: {
     fontSize: 14,
     fontWeight: '500',
@@ -178,22 +215,50 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
   },
+  itemsContainer: {
+    gap: 12,
+  },
+  itemsContainerTablet: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingHorizontal: 8,
+  },
+  itemsContainerDesktop: {
+    paddingHorizontal: 24,
+    gap: 20,
+  },
   itemCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
+  itemCardTablet: {
+    width: '48%',
+    flexDirection: 'column',
+  },
+  itemCardDesktop: {
+    width: '31%',
+    flexDirection: 'column',
+  },
   itemImage: {
     width: 120,
     height: 120,
     backgroundColor: '#f3f4f6',
+  },
+  itemImageTablet: {
+    width: '100%',
+    height: 140,
+  },
+  itemImageDesktop: {
+    width: '100%',
+    height: 180,
   },
   itemInfo: {
     flex: 1,
@@ -212,11 +277,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#11181C',
   },
+  itemNameDesktop: {
+    fontSize: 18,
+  },
   categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f3f4f6',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    gap: 4,
+  },
+  categoryBadgeEmoji: {
+    fontSize: 12,
   },
   categoryBadgeText: {
     fontSize: 10,
@@ -239,6 +313,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#11181C',
+  },
+  itemPriceDesktop: {
+    fontSize: 20,
   },
   viewButton: {
     flexDirection: 'row',

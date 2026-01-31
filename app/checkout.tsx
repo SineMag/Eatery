@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
   Modal,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '@/src/contexts/CartContext';
@@ -35,6 +36,9 @@ export default function CheckoutScreen() {
   const { items, getTotal, clearCart } = useCart();
   const { user, updateProfile } = useAuth();
   const { addOrder } = useOrders();
+  const { width } = useWindowDimensions();
+
+  const isDesktop = width >= 1024;
 
   const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
@@ -181,15 +185,16 @@ export default function CheckoutScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, isDesktop && styles.headerDesktop]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
           <BackIcon size={24} color="#11181C" />
         </TouchableOpacity>
-        <Text style={styles.title}>Checkout</Text>
+        <Text style={[styles.title, isDesktop && styles.titleDesktop]}>Checkout</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+        <View style={isDesktop && styles.checkoutGrid}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <LocationIcon size={20} color="#11181C" />
@@ -306,10 +311,11 @@ export default function CheckoutScreen() {
           ))}
         </View>
 
+        </View>
         <View style={{ height: 200 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, isDesktop && styles.footerDesktop]}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Subtotal</Text>
           <Text style={styles.summaryValue}>R{subtotal.toFixed(2)}</Text>
@@ -758,5 +764,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '600',
+  },
+  headerDesktop: {
+    paddingHorizontal: 40,
+  },
+  titleDesktop: {
+    fontSize: 28,
+  },
+  checkoutGrid: {
+    maxWidth: 800,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  footerDesktop: {
+    maxWidth: 500,
+    alignSelf: 'center',
+    width: '100%',
   },
 });

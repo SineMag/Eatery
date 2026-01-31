@@ -121,20 +121,51 @@ export const UsersIcon = ({ size = 24, color = '#11181C' }: IconProps) => (
 
 export const getCategoryIcon = (categoryId: string, size = 24, color = '#11181C') => {
   switch (categoryId) {
+    case '1':
     case 'burgers':
       return <BurgerIcon size={size} color={color} />;
+    case '2':
     case 'mains':
       return <MainsIcon size={size} color={color} />;
+    case '3':
     case 'starters':
       return <StartersIcon size={size} color={color} />;
+    case '4':
     case 'desserts':
       return <DessertsIcon size={size} color={color} />;
+    case '5':
     case 'beverages':
       return <BeveragesIcon size={size} color={color} />;
+    case '6':
     case 'alcohol':
       return <AlcoholIcon size={size} color={color} />;
     default:
       return <MenuIcon size={size} color={color} />;
+  }
+};
+
+export const getCategoryEmoji = (categoryId: string): string => {
+  switch (categoryId) {
+    case '1':
+    case 'burgers':
+      return '🍔';
+    case '2':
+    case 'mains':
+      return '🍽️';
+    case '3':
+    case 'starters':
+      return '🥗';
+    case '4':
+    case 'desserts':
+      return '🍰';
+    case '5':
+    case 'beverages':
+      return '🥤';
+    case '6':
+    case 'alcohol':
+      return '🍺';
+    default:
+      return '🍴';
   }
 };
 

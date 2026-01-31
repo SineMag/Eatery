@@ -8,6 +8,7 @@ import {
   Image,
   SafeAreaView,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '@/src/contexts/CartContext';
@@ -25,6 +26,10 @@ export default function CartScreen() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCart();
   const { user } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1024;
 
   const handleCheckout = () => {
     if (!user) {
@@ -98,10 +103,10 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, isDesktop && styles.headerDesktop]}>
         <View style={styles.headerLeft}>
           <CartIcon size={24} color="#11181C" />
-          <Text style={styles.title}>Cart</Text>
+          <Text style={[styles.title, isDesktop && styles.titleDesktop]}>Cart</Text>
         </View>
         <TouchableOpacity onPress={handleClearCart} style={styles.clearButton}>
           <TrashIcon size={18} color="#ef4444" />
@@ -110,8 +115,9 @@ export default function CartScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.itemsList}>
+        <View style={isDesktop && styles.itemsGrid}>
         {items.map((item) => (
-          <View key={item.id} style={styles.cartItem}>
+          <View key={item.id} style={[styles.cartItem, isDesktop && styles.cartItemDesktop]}>
             <Image
               source={{ uri: item.foodItem.image }}
               style={styles.itemImage}
@@ -177,10 +183,11 @@ export default function CartScreen() {
             </View>
           </View>
         ))}
+        </View>
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      <View style={styles.summary}>
+      <View style={[styles.summary, isDesktop && styles.summaryDesktop]}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Subtotal</Text>
           <Text style={styles.summaryValue}>R{subtotal.toFixed(2)}</Text>
@@ -407,5 +414,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  headerDesktop: {
+    paddingHorizontal: 40,
+  },
+  titleDesktop: {
+    fontSize: 32,
+  },
+  itemsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  cartItemDesktop: {
+    width: '48%',
+  },
+  summaryDesktop: {
+    maxWidth: 500,
+    alignSelf: 'center',
+    width: '100%',
+    marginHorizontal: 'auto',
   },
 });
