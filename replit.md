@@ -142,10 +142,32 @@ Using Expo Vector Icons for all icons throughout the app:
 - FontAwesome5 for specific icons
 - Feather for utility icons
 
+## Responsive Design
+The app uses `useWindowDimensions` hook for responsive layouts:
+- **Mobile**: Default styles (< 768px width)
+- **Tablet**: Enhanced grid layouts (768px - 1024px)
+- **Desktop**: Multi-column grids, larger fonts, wider max-widths (> 1024px)
+
+## Category Emojis
+Categories use emojis for visual appeal:
+- Burgers: 🍔
+- Mains: 🍽️
+- Starters: 🥗
+- Desserts: 🍰
+- Beverages: 🥤
+- Alcohol: 🍺
+
+## Logo & Assets
+- Logo and splash screen: `assets/images/Eatery Logo` (to be uploaded)
+- Favicon: `assets/images/favicon.ico` (to be uploaded)
+- Current placeholders use default Expo icons
+
 ## Recent Changes
-- January 2026: Enhanced cart with edit customization navigation
+- January 2026: Added responsive design for tablet and desktop screens
+- Added emoji support for category tags
+- Enhanced cart with edit customization navigation
 - Enhanced checkout with card management and simulated payments
 - Added admin dashboard with revenue/order charts
-- Replaced all emojis with vector icons
+- Used Expo Vector Icons for UI elements
 - Added restaurant settings management
 - Improved order tracking with progress indicators

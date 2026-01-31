@@ -8,8 +8,7 @@ import {
   SafeAreaView,
   Alert,
   TextInput,
-  Modal,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -28,12 +27,9 @@ import {
   EditIcon,
   TrashIcon,
   PlusIcon,
-  getCategoryIcon,
   SettingsIcon
 } from '@/src/components/Icons';
 import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
-
-const screenWidth = Dimensions.get('window').width;
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   pending: { bg: '#fef3c7', text: '#d97706' },
@@ -57,8 +53,8 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const { orders, updateOrderStatus } = useOrders();
+  const { width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'items' | 'settings'>('overview');
-  const [showAddItem, setShowAddItem] = useState(false);
   const [restaurantInfo, setRestaurantInfo] = useState({
     name: 'Eatery Restaurant',
     address: '123 Food Street, Johannesburg',
@@ -66,6 +62,10 @@ export default function AdminDashboard() {
     email: 'info@eatery.co.za',
     openingHours: '09:00 - 22:00',
   });
+
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1024;
+  const chartWidth = Math.min(width - 64, isDesktop ? 600 : isTablet ? 500 : 400);
 
   const stats = useMemo(() => {
     const totalRevenue = orders
@@ -155,21 +155,25 @@ export default function AdminDashboard() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, isDesktop && styles.headerDesktop]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
           <BackIcon size={24} color="#11181C" />
         </TouchableOpacity>
-        <Text style={styles.title}>Admin Dashboard</Text>
+        <Text style={[styles.title, isDesktop && styles.titleDesktop]}>Admin Dashboard</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, isDesktop && styles.tabsDesktop]}>
         {tabs.map((tab) => {
           const IconComponent = tab.icon;
           return (
             <TouchableOpacity
               key={tab.id}
-              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+              style={[
+                styles.tab, 
+                activeTab === tab.id && styles.tabActive,
+                isDesktop && styles.tabDesktop
+              ]}
               onPress={() => setActiveTab(tab.id as any)}
             >
               <IconComponent size={18} color={activeTab === tab.id ? '#fff' : '#6b7280'} />
@@ -183,71 +187,77 @@ export default function AdminDashboard() {
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {activeTab === 'overview' && (
-          <>
-            <View style={styles.statsGrid}>
-              <View style={[styles.statCard, { backgroundColor: '#f0fdf4' }]}>
+          <View style={isDesktop && styles.overviewDesktop}>
+            <View style={[styles.statsGrid, isDesktop && styles.statsGridDesktop]}>
+              <View style={[styles.statCard, { backgroundColor: '#f0fdf4' }, isDesktop && styles.statCardDesktop]}>
                 <View style={styles.statHeader}>
                   <DollarIcon size={24} color="#10b981" />
                 </View>
-                <Text style={styles.statValue}>R{stats.totalRevenue.toFixed(0)}</Text>
+                <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>
+                  R{stats.totalRevenue.toFixed(0)}
+                </Text>
                 <Text style={styles.statLabel}>Total Revenue</Text>
               </View>
-              <View style={[styles.statCard, { backgroundColor: '#eff6ff' }]}>
+              <View style={[styles.statCard, { backgroundColor: '#eff6ff' }, isDesktop && styles.statCardDesktop]}>
                 <View style={styles.statHeader}>
                   <PackageIcon size={24} color="#3b82f6" />
                 </View>
-                <Text style={styles.statValue}>{stats.totalOrders}</Text>
+                <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>{stats.totalOrders}</Text>
                 <Text style={styles.statLabel}>Total Orders</Text>
               </View>
-              <View style={[styles.statCard, { backgroundColor: '#fef3c7' }]}>
+              <View style={[styles.statCard, { backgroundColor: '#fef3c7' }, isDesktop && styles.statCardDesktop]}>
                 <View style={styles.statHeader}>
                   <TrendingUpIcon size={24} color="#d97706" />
                 </View>
-                <Text style={styles.statValue}>{stats.todayOrders}</Text>
+                <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>{stats.todayOrders}</Text>
                 <Text style={styles.statLabel}>Today's Orders</Text>
               </View>
-              <View style={[styles.statCard, { backgroundColor: '#fce7f3' }]}>
+              <View style={[styles.statCard, { backgroundColor: '#fce7f3' }, isDesktop && styles.statCardDesktop]}>
                 <View style={styles.statHeader}>
                   <UsersIcon size={24} color="#db2777" />
                 </View>
-                <Text style={styles.statValue}>R{stats.avgOrderValue.toFixed(0)}</Text>
+                <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>
+                  R{stats.avgOrderValue.toFixed(0)}
+                </Text>
                 <Text style={styles.statLabel}>Avg. Order Value</Text>
               </View>
             </View>
 
-            <View style={styles.chartSection}>
-              <Text style={styles.chartTitle}>Revenue (Last 7 Days)</Text>
-              <BarChart
-                data={{
-                  labels: stats.last7Days.map(d => d.slice(-2)),
-                  datasets: [{ data: stats.dailyRevenue.length > 0 ? stats.dailyRevenue : [0] }],
-                }}
-                width={screenWidth - 64}
-                height={200}
-                yAxisLabel="R"
-                yAxisSuffix=""
-                chartConfig={{
-                  ...chartConfig,
-                  color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-                }}
-                style={styles.chart}
-              />
-            </View>
-
-            {pieData.length > 0 && (
-              <View style={styles.chartSection}>
-                <Text style={styles.chartTitle}>Order Status Distribution</Text>
-                <PieChart
-                  data={pieData}
-                  width={screenWidth - 64}
+            <View style={[styles.chartsRow, isDesktop && styles.chartsRowDesktop]}>
+              <View style={[styles.chartSection, isDesktop && styles.chartSectionDesktop]}>
+                <Text style={styles.chartTitle}>Revenue (Last 7 Days)</Text>
+                <BarChart
+                  data={{
+                    labels: stats.last7Days.map(d => d.slice(-2)),
+                    datasets: [{ data: stats.dailyRevenue.length > 0 ? stats.dailyRevenue : [0] }],
+                  }}
+                  width={chartWidth}
                   height={200}
-                  chartConfig={chartConfig}
-                  accessor="count"
-                  backgroundColor="transparent"
-                  paddingLeft="15"
+                  yAxisLabel="R"
+                  yAxisSuffix=""
+                  chartConfig={{
+                    ...chartConfig,
+                    color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+                  }}
+                  style={styles.chart}
                 />
               </View>
-            )}
+
+              {pieData.length > 0 && (
+                <View style={[styles.chartSection, isDesktop && styles.chartSectionDesktop]}>
+                  <Text style={styles.chartTitle}>Order Status Distribution</Text>
+                  <PieChart
+                    data={pieData}
+                    width={chartWidth}
+                    height={200}
+                    chartConfig={chartConfig}
+                    accessor="count"
+                    backgroundColor="transparent"
+                    paddingLeft="15"
+                  />
+                </View>
+              )}
+            </View>
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Top Selling Items</Text>
@@ -267,11 +277,11 @@ export default function AdminDashboard() {
                 <Text style={styles.emptyText}>No sales data yet</Text>
               )}
             </View>
-          </>
+          </View>
         )}
 
         {activeTab === 'orders' && (
-          <View style={styles.ordersList}>
+          <View style={[styles.ordersList, isDesktop && styles.ordersListDesktop]}>
             {orders.length === 0 ? (
               <View style={styles.emptyState}>
                 <OrdersIcon size={48} color="#d1d5db" />
@@ -279,92 +289,94 @@ export default function AdminDashboard() {
                 <Text style={styles.emptyText}>Orders will appear here</Text>
               </View>
             ) : (
-              orders.map((order) => {
-                const statusColor = statusColors[order.status] || statusColors.pending;
-                const orderDate = new Date(order.createdAt).toLocaleDateString('en-ZA', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
-                return (
-                  <View key={order.id} style={styles.orderCard}>
-                    <View style={styles.orderHeader}>
-                      <View>
-                        <Text style={styles.orderId}>#{order.id.slice(-6)}</Text>
-                        <Text style={styles.orderDate}>{orderDate}</Text>
+              <View style={isDesktop && styles.ordersGrid}>
+                {orders.map((order) => {
+                  const statusColor = statusColors[order.status] || statusColors.pending;
+                  const orderDate = new Date(order.createdAt).toLocaleDateString('en-ZA', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  return (
+                    <View key={order.id} style={[styles.orderCard, isDesktop && styles.orderCardDesktop]}>
+                      <View style={styles.orderHeader}>
+                        <View>
+                          <Text style={styles.orderId}>#{order.id.slice(-6)}</Text>
+                          <Text style={styles.orderDate}>{orderDate}</Text>
+                        </View>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
+                          <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>
+                            {order.status}
+                          </Text>
+                        </View>
                       </View>
-                      <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
-                        <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>
-                          {order.status}
-                        </Text>
+                      <Text style={styles.orderCustomer}>
+                        {order.userName || 'Unknown'} - {order.userContact || 'N/A'}
+                      </Text>
+                      <Text style={styles.orderAddress} numberOfLines={1}>{order.deliveryAddress}</Text>
+                      
+                      <View style={styles.orderItems}>
+                        {order.items.slice(0, 2).map((item, idx) => (
+                          <Text key={idx} style={styles.orderItemText}>
+                            {item.quantity}x {item.foodItem.name}
+                          </Text>
+                        ))}
+                        {order.items.length > 2 && (
+                          <Text style={styles.moreItems}>+{order.items.length - 2} more</Text>
+                        )}
                       </View>
-                    </View>
-                    <Text style={styles.orderCustomer}>
-                      {order.userName || 'Unknown'} - {order.userContact || 'N/A'}
-                    </Text>
-                    <Text style={styles.orderAddress} numberOfLines={1}>{order.deliveryAddress}</Text>
-                    
-                    <View style={styles.orderItems}>
-                      {order.items.slice(0, 2).map((item, idx) => (
-                        <Text key={idx} style={styles.orderItemText}>
-                          {item.quantity}x {item.foodItem.name}
-                        </Text>
-                      ))}
-                      {order.items.length > 2 && (
-                        <Text style={styles.moreItems}>+{order.items.length - 2} more</Text>
+
+                      <View style={styles.orderFooter}>
+                        <Text style={styles.orderTotal}>R{order.total.toFixed(2)}</Text>
+                      </View>
+                      
+                      {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                        <View style={styles.statusButtons}>
+                          {order.status === 'pending' && (
+                            <TouchableOpacity
+                              style={[styles.statusButton, { backgroundColor: '#3b82f6' }]}
+                              onPress={() => handleStatusUpdate(order.id, 'confirmed')}
+                            >
+                              <Text style={styles.statusButtonText}>Confirm</Text>
+                            </TouchableOpacity>
+                          )}
+                          {order.status === 'confirmed' && (
+                            <TouchableOpacity
+                              style={[styles.statusButton, { backgroundColor: '#db2777' }]}
+                              onPress={() => handleStatusUpdate(order.id, 'preparing')}
+                            >
+                              <Text style={styles.statusButtonText}>Preparing</Text>
+                            </TouchableOpacity>
+                          )}
+                          {order.status === 'preparing' && (
+                            <TouchableOpacity
+                              style={[styles.statusButton, { backgroundColor: '#059669' }]}
+                              onPress={() => handleStatusUpdate(order.id, 'ready')}
+                            >
+                              <Text style={styles.statusButtonText}>Ready</Text>
+                            </TouchableOpacity>
+                          )}
+                          {order.status === 'ready' && (
+                            <TouchableOpacity
+                              style={[styles.statusButton, { backgroundColor: '#374151' }]}
+                              onPress={() => handleStatusUpdate(order.id, 'delivered')}
+                            >
+                              <Text style={styles.statusButtonText}>Delivered</Text>
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity
+                            style={[styles.statusButton, { backgroundColor: '#ef4444' }]}
+                            onPress={() => handleStatusUpdate(order.id, 'cancelled')}
+                          >
+                            <Text style={styles.statusButtonText}>Cancel</Text>
+                          </TouchableOpacity>
+                        </View>
                       )}
                     </View>
-
-                    <View style={styles.orderFooter}>
-                      <Text style={styles.orderTotal}>R{order.total.toFixed(2)}</Text>
-                    </View>
-                    
-                    {order.status !== 'delivered' && order.status !== 'cancelled' && (
-                      <View style={styles.statusButtons}>
-                        {order.status === 'pending' && (
-                          <TouchableOpacity
-                            style={[styles.statusButton, { backgroundColor: '#3b82f6' }]}
-                            onPress={() => handleStatusUpdate(order.id, 'confirmed')}
-                          >
-                            <Text style={styles.statusButtonText}>Confirm</Text>
-                          </TouchableOpacity>
-                        )}
-                        {order.status === 'confirmed' && (
-                          <TouchableOpacity
-                            style={[styles.statusButton, { backgroundColor: '#db2777' }]}
-                            onPress={() => handleStatusUpdate(order.id, 'preparing')}
-                          >
-                            <Text style={styles.statusButtonText}>Preparing</Text>
-                          </TouchableOpacity>
-                        )}
-                        {order.status === 'preparing' && (
-                          <TouchableOpacity
-                            style={[styles.statusButton, { backgroundColor: '#059669' }]}
-                            onPress={() => handleStatusUpdate(order.id, 'ready')}
-                          >
-                            <Text style={styles.statusButtonText}>Ready</Text>
-                          </TouchableOpacity>
-                        )}
-                        {order.status === 'ready' && (
-                          <TouchableOpacity
-                            style={[styles.statusButton, { backgroundColor: '#374151' }]}
-                            onPress={() => handleStatusUpdate(order.id, 'delivered')}
-                          >
-                            <Text style={styles.statusButtonText}>Delivered</Text>
-                          </TouchableOpacity>
-                        )}
-                        <TouchableOpacity
-                          style={[styles.statusButton, { backgroundColor: '#ef4444' }]}
-                          onPress={() => handleStatusUpdate(order.id, 'cancelled')}
-                        >
-                          <Text style={styles.statusButtonText}>Cancel</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                );
-              })
+                  );
+                })}
+              </View>
             )}
           </View>
         )}
@@ -382,41 +394,43 @@ export default function AdminDashboard() {
             {categories.map((category) => (
               <View key={category.id} style={styles.categorySection}>
                 <View style={styles.categoryHeader}>
-                  {getCategoryIcon(category.id, 24, '#11181C')}
+                  <Text style={styles.categoryEmoji}>{category.icon}</Text>
                   <Text style={styles.categoryTitle}>{category.name}</Text>
                   <Text style={styles.categoryCount}>
                     {foodItems.filter(i => i.categoryId === category.id).length} items
                   </Text>
                 </View>
-                {foodItems
-                  .filter((item) => item.categoryId === category.id)
-                  .map((item) => (
-                    <View key={item.id} style={styles.menuItem}>
-                      <View style={styles.menuItemInfo}>
-                        <Text style={styles.menuItemName}>{item.name}</Text>
-                        <Text style={styles.menuItemDesc} numberOfLines={1}>
-                          {item.description}
-                        </Text>
+                <View style={isDesktop && styles.menuItemsGrid}>
+                  {foodItems
+                    .filter((item) => item.categoryId === category.id)
+                    .map((item) => (
+                      <View key={item.id} style={[styles.menuItem, isDesktop && styles.menuItemDesktop]}>
+                        <View style={styles.menuItemInfo}>
+                          <Text style={styles.menuItemName}>{item.name}</Text>
+                          <Text style={styles.menuItemDesc} numberOfLines={1}>
+                            {item.description}
+                          </Text>
+                        </View>
+                        <Text style={styles.menuItemPrice}>R{item.price.toFixed(2)}</Text>
+                        <View style={styles.menuItemActions}>
+                          <TouchableOpacity style={styles.menuItemAction}>
+                            <EditIcon size={16} color="#3b82f6" />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.menuItemAction}>
+                            <TrashIcon size={16} color="#ef4444" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                      <Text style={styles.menuItemPrice}>R{item.price.toFixed(2)}</Text>
-                      <View style={styles.menuItemActions}>
-                        <TouchableOpacity style={styles.menuItemAction}>
-                          <EditIcon size={16} color="#3b82f6" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.menuItemAction}>
-                          <TrashIcon size={16} color="#ef4444" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ))}
+                    ))}
+                </View>
               </View>
             ))}
           </View>
         )}
 
         {activeTab === 'settings' && (
-          <View style={styles.settingsContent}>
-            <View style={styles.section}>
+          <View style={[styles.settingsContent, isDesktop && styles.settingsContentDesktop]}>
+            <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
               <Text style={styles.sectionTitle}>Restaurant Information</Text>
               
               <View style={styles.inputGroup}>
@@ -438,24 +452,26 @@ export default function AdminDashboard() {
                 />
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Phone Number</Text>
-                <TextInput
-                  style={styles.input}
-                  value={restaurantInfo.phone}
-                  onChangeText={(text) => setRestaurantInfo({...restaurantInfo, phone: text})}
-                  keyboardType="phone-pad"
-                />
-              </View>
+              <View style={isDesktop ? styles.inputRow : undefined}>
+                <View style={[styles.inputGroup, isDesktop && { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Phone Number</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={restaurantInfo.phone}
+                    onChangeText={(text) => setRestaurantInfo({...restaurantInfo, phone: text})}
+                    keyboardType="phone-pad"
+                  />
+                </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  value={restaurantInfo.email}
-                  onChangeText={(text) => setRestaurantInfo({...restaurantInfo, email: text})}
-                  keyboardType="email-address"
-                />
+                <View style={[styles.inputGroup, isDesktop && { flex: 1, marginLeft: 16 }]}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={restaurantInfo.email}
+                    onChangeText={(text) => setRestaurantInfo({...restaurantInfo, email: text})}
+                    keyboardType="email-address"
+                  />
+                </View>
               </View>
 
               <View style={styles.inputGroup}>
@@ -497,6 +513,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e5e5',
   },
+  headerDesktop: {
+    paddingHorizontal: 40,
+  },
   headerButton: {
     padding: 8,
   },
@@ -505,12 +524,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#11181C',
   },
+  titleDesktop: {
+    fontSize: 28,
+  },
   tabs: {
     flexDirection: 'row',
     backgroundColor: '#fff',
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
+  },
+  tabsDesktop: {
+    paddingHorizontal: 40,
+    gap: 16,
   },
   tab: {
     flex: 1,
@@ -521,6 +547,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     backgroundColor: '#f3f4f6',
+  },
+  tabDesktop: {
+    flex: 0,
+    paddingHorizontal: 24,
   },
   tabActive: {
     backgroundColor: '#11181C',
@@ -537,16 +567,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  overviewDesktop: {
+    paddingHorizontal: 24,
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: 16,
   },
+  statsGridDesktop: {
+    gap: 20,
+  },
   statCard: {
     width: '48%',
     padding: 16,
     borderRadius: 16,
+  },
+  statCardDesktop: {
+    width: '23%',
+    padding: 24,
   },
   statHeader: {
     marginBottom: 12,
@@ -557,15 +597,30 @@ const styles = StyleSheet.create({
     color: '#11181C',
     marginBottom: 4,
   },
+  statValueDesktop: {
+    fontSize: 32,
+  },
   statLabel: {
     fontSize: 13,
     color: '#6b7280',
+  },
+  chartsRow: {
+    gap: 16,
+  },
+  chartsRowDesktop: {
+    flexDirection: 'row',
+    gap: 24,
   },
   chartSection: {
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+  },
+  chartSectionDesktop: {
+    flex: 1,
+    padding: 24,
+    marginBottom: 0,
   },
   chartTitle: {
     fontSize: 16,
@@ -581,6 +636,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+  },
+  sectionDesktop: {
+    padding: 32,
+    maxWidth: 600,
   },
   sectionTitle: {
     fontSize: 16,
@@ -629,6 +688,14 @@ const styles = StyleSheet.create({
   ordersList: {
     gap: 12,
   },
+  ordersListDesktop: {
+    paddingHorizontal: 24,
+  },
+  ordersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
+  },
   emptyState: {
     alignItems: 'center',
     paddingVertical: 60,
@@ -648,6 +715,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
+    marginBottom: 12,
+  },
+  orderCardDesktop: {
+    width: '48%',
+    marginBottom: 0,
   },
   orderHeader: {
     flexDirection: 'row',
@@ -750,6 +822,9 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 12,
   },
+  categoryEmoji: {
+    fontSize: 24,
+  },
   categoryTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -760,6 +835,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6b7280',
   },
+  menuItemsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
   menuItem: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -767,6 +847,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
     alignItems: 'center',
+  },
+  menuItemDesktop: {
+    width: '48%',
+    marginBottom: 0,
   },
   menuItemInfo: {
     flex: 1,
@@ -797,6 +881,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   settingsContent: {},
+  settingsContentDesktop: {
+    paddingHorizontal: 24,
+  },
+  inputRow: {
+    flexDirection: 'row',
+  },
   inputGroup: {
     marginBottom: 16,
   },

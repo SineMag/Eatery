@@ -7,12 +7,12 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { categories, foodItems } from '@/src/data/menuData';
 import { 
-  getCategoryIcon, 
   PlusIcon, 
   AdminIcon,
   ChevronRightIcon 
@@ -21,15 +21,23 @@ import {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { width } = useWindowDimensions();
 
-  const featuredItems = foodItems.slice(0, 4);
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1024;
+  
+  const itemCardWidth = isDesktop ? '23%' : isTablet ? '31%' : '48%';
+  const categoryCardWidth = isDesktop ? 110 : isTablet ? 100 : 85;
+  const popularCardWidth = isDesktop ? 180 : isTablet ? 160 : 140;
+
+  const featuredItems = foodItems.slice(0, isDesktop ? 8 : isTablet ? 6 : 4);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+        <View style={[styles.header, isDesktop && styles.headerDesktop]}>
           <View>
-            <Text style={styles.greeting}>
+            <Text style={[styles.greeting, isDesktop && styles.greetingDesktop]}>
               {user ? `Welcome back, ${user.name}!` : 'Welcome to Eatery'}
             </Text>
             <Text style={styles.subGreeting}>What would you like to eat today?</Text>
@@ -46,19 +54,23 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Categories</Text>
+          <Text style={[styles.sectionTitle, isDesktop && styles.sectionTitleDesktop]}>Categories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.categoryRow}>
               {categories.map((category) => (
                 <TouchableOpacity
                   key={category.id}
-                  style={styles.categoryCard}
+                  style={[styles.categoryCard, { width: categoryCardWidth }]}
                   onPress={() => router.push(`/menu?category=${category.id}`)}
                 >
-                  <View style={styles.categoryIconContainer}>
-                    {getCategoryIcon(category.id, 28, '#11181C')}
+                  <View style={[styles.categoryIconContainer, isDesktop && styles.categoryIconContainerDesktop]}>
+                    <Text style={[styles.categoryEmoji, isDesktop && styles.categoryEmojiDesktop]}>
+                      {category.icon}
+                    </Text>
                   </View>
-                  <Text style={styles.categoryName}>{category.name}</Text>
+                  <Text style={[styles.categoryName, isDesktop && styles.categoryNameDesktop]}>
+                    {category.name}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -67,7 +79,7 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Featured Items</Text>
+            <Text style={[styles.sectionTitle, isDesktop && styles.sectionTitleDesktop]}>Featured Items</Text>
             <TouchableOpacity 
               style={styles.seeAllButton}
               onPress={() => router.push('/menu')}
@@ -76,23 +88,28 @@ export default function HomeScreen() {
               <ChevronRightIcon size={16} color="#3b82f6" />
             </TouchableOpacity>
           </View>
-          <View style={styles.itemsGrid}>
+          <View style={[styles.itemsGrid, isDesktop && styles.itemsGridDesktop]}>
             {featuredItems.map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={styles.itemCard}
+                style={[styles.itemCard, { width: itemCardWidth as any }]}
                 onPress={() => router.push(`/item/${item.id}`)}
               >
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
+                <Image 
+                  source={{ uri: item.image }} 
+                  style={[styles.itemImage, isDesktop && styles.itemImageDesktop]} 
+                />
                 <View style={styles.itemInfo}>
-                  <Text style={styles.itemName} numberOfLines={1}>
+                  <Text style={[styles.itemName, isDesktop && styles.itemNameDesktop]} numberOfLines={1}>
                     {item.name}
                   </Text>
                   <Text style={styles.itemDescription} numberOfLines={2}>
                     {item.description}
                   </Text>
                   <View style={styles.itemFooter}>
-                    <Text style={styles.itemPrice}>R{item.price.toFixed(2)}</Text>
+                    <Text style={[styles.itemPrice, isDesktop && styles.itemPriceDesktop]}>
+                      R{item.price.toFixed(2)}
+                    </Text>
                     <TouchableOpacity
                       style={styles.addButton}
                       onPress={() => router.push(`/item/${item.id}`)}
@@ -107,16 +124,19 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular This Week</Text>
+          <Text style={[styles.sectionTitle, isDesktop && styles.sectionTitleDesktop]}>Popular This Week</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.popularRow}>
-              {foodItems.slice(4, 8).map((item) => (
+              {foodItems.slice(4, 10).map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.popularCard}
+                  style={[styles.popularCard, { width: popularCardWidth }]}
                   onPress={() => router.push(`/item/${item.id}`)}
                 >
-                  <Image source={{ uri: item.image }} style={styles.popularImage} />
+                  <Image 
+                    source={{ uri: item.image }} 
+                    style={[styles.popularImage, isDesktop && styles.popularImageDesktop]} 
+                  />
                   <Text style={styles.popularName} numberOfLines={1}>
                     {item.name}
                   </Text>
@@ -128,8 +148,8 @@ export default function HomeScreen() {
         </View>
 
         {!user && (
-          <View style={styles.ctaSection}>
-            <Text style={styles.ctaTitle}>Ready to order?</Text>
+          <View style={[styles.ctaSection, isDesktop && styles.ctaSectionDesktop]}>
+            <Text style={[styles.ctaTitle, isDesktop && styles.ctaTitleDesktop]}>Ready to order?</Text>
             <Text style={styles.ctaText}>
               Sign in or create an account to start ordering delicious food!
             </Text>
@@ -168,10 +188,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 10,
   },
+  headerDesktop: {
+    paddingHorizontal: 40,
+    paddingTop: 20,
+  },
   greeting: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#11181C',
+  },
+  greetingDesktop: {
+    fontSize: 32,
   },
   subGreeting: {
     fontSize: 14,
@@ -209,6 +236,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 12,
   },
+  sectionTitleDesktop: {
+    fontSize: 22,
+    paddingHorizontal: 40,
+  },
   seeAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,7 +260,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
-    width: 90,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -245,11 +275,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  categoryIconContainerDesktop: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+  categoryEmoji: {
+    fontSize: 28,
+  },
+  categoryEmojiDesktop: {
+    fontSize: 32,
+  },
   categoryName: {
     fontSize: 12,
     fontWeight: '500',
     color: '#11181C',
     textAlign: 'center',
+  },
+  categoryNameDesktop: {
+    fontSize: 14,
   },
   itemsGrid: {
     flexDirection: 'row',
@@ -257,8 +301,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
+  itemsGridDesktop: {
+    paddingHorizontal: 36,
+    gap: 16,
+  },
   itemCard: {
-    width: '48%',
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
@@ -273,6 +320,9 @@ const styles = StyleSheet.create({
     height: 120,
     backgroundColor: '#f3f4f6',
   },
+  itemImageDesktop: {
+    height: 160,
+  },
   itemInfo: {
     padding: 12,
   },
@@ -281,6 +331,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#11181C',
     marginBottom: 4,
+  },
+  itemNameDesktop: {
+    fontSize: 16,
   },
   itemDescription: {
     fontSize: 12,
@@ -298,6 +351,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#11181C',
   },
+  itemPriceDesktop: {
+    fontSize: 18,
+  },
   addButton: {
     width: 32,
     height: 32,
@@ -312,7 +368,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   popularCard: {
-    width: 140,
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
@@ -326,6 +381,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 100,
     backgroundColor: '#f3f4f6',
+  },
+  popularImageDesktop: {
+    height: 130,
   },
   popularName: {
     fontSize: 13,
@@ -347,11 +405,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#11181C',
     borderRadius: 16,
   },
+  ctaSectionDesktop: {
+    marginHorizontal: 40,
+    padding: 40,
+  },
   ctaTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,
+  },
+  ctaTitleDesktop: {
+    fontSize: 26,
   },
   ctaText: {
     fontSize: 14,
