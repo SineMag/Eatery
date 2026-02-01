@@ -1,50 +1,103 @@
-# Welcome to your Expo app 👋
+# Eatery - Restaurant Ordering Application
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A comprehensive React Native restaurant ordering application built with Expo.
 
-## Get started
+## Design
 
-1. Install dependencies
+View the application design: [Figma Design Link](https://www.figma.com/design/YOUR_DESIGN_ID)
 
+> **Note**: Replace the link above with your actual Figma/design file link
+
+## Features
+
+### User Features
+- **Registration & Login**: Email/password authentication with full profile management
+- **Profile Management**: Update name, email, address, contact number, and card details
+- **Menu Browsing**: Browse food items by category (Burgers, Mains, Starters, Desserts, Beverages, Alcohol)
+- **Item Customization**: Select sides, drinks, extras, and modify ingredients
+- **Cart Management**: Add/remove items, edit quantities, edit customizations, clear cart
+- **Checkout**: Change delivery address, select payment method, add new cards
+- **Order Tracking**: View order status with progress indicators
+
+### Admin Features
+- **Dashboard**: Revenue charts, order statistics, top-selling items
+- **Order Management**: View all orders, update order status
+- **Menu Management**: Add, edit, and delete menu items
+- **Restaurant Settings**: Update restaurant information
+
+## Tech Stack
+
+- **Framework**: React Native with Expo
+- **Navigation**: Expo Router (file-based routing)
+- **State Management**: React Context (Auth, Cart, Orders, Menu)
+- **Storage**: AsyncStorage for local persistence
+- **Icons**: Expo Vector Icons (@expo/vector-icons)
+- **Charts**: react-native-chart-kit with react-native-svg
+- **Language**: TypeScript
+
+## Project Structure
+
+```
+├── app/                        # Expo Router screens
+│   ├── (tabs)/                # Tab navigation screens
+│   │   ├── index.tsx          # Home screen
+│   │   ├── menu.tsx           # Menu browsing
+│   │   ├── cart.tsx           # Shopping cart
+│   │   ├── orders.tsx         # Order history
+│   │   └── profile.tsx        # User profile
+│   ├── auth/                  # Authentication screens
+│   ├── item/[id].tsx          # Item detail with customization
+│   ├── edit-cart-item/[id].tsx # Edit cart item
+│   ├── checkout.tsx           # Checkout flow
+│   ├── order/[id].tsx         # Order tracking
+│   └── admin.tsx              # Admin dashboard
+├── src/
+│   ├── components/            # Reusable components
+│   ├── contexts/              # React Context providers
+│   ├── data/                  # Default menu data
+│   └── types/                 # TypeScript definitions
+```
+
+## Getting Started
+
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. Start the app:
    ```bash
-   npx expo start
+   npm run start
    ```
 
-In the output, you'll find options to open the app in a
+## Payment Integration
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+The app currently uses simulated payment processing. To integrate a real payment provider:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. Set up Stripe or PayPal developer account
+2. Add API keys to environment secrets
+3. Replace `simulatePayment()` function in checkout.tsx with real API calls
 
-## Get a fresh project
+### Useful Links
+- [Stripe API](https://stripe.com/docs/api)
+- [PayPal Developer](https://developer.paypal.com/dashboard/)
+- [VCC Generator for Testing](https://www.vccgenerator.org/)
 
-When you're ready, run:
+## Responsive Design
 
-```bash
-npm run reset-project
-```
+The app adapts to different screen sizes:
+- **Mobile**: < 768px width
+- **Tablet**: 768px - 1024px
+- **Desktop**: > 1024px
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Currency
 
-## Learn more
+All prices are displayed in South African Rand (R)
 
-To learn more about developing your project with Expo, look at the following resources:
+## Screenshots
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+> Add screenshots of your application here
 
-## Join the community
+## License
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This project is for educational purposes.
