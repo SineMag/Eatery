@@ -6,14 +6,16 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider } from '@/src/contexts/AuthContext';
 import { CartProvider } from '@/src/contexts/CartContext';
 import { OrderProvider } from '@/src/contexts/OrderContext';
+import { MenuProvider } from '@/src/contexts/MenuContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <AuthProvider>
-      <CartProvider>
-        <OrderProvider>
+      <MenuProvider>
+        <CartProvider>
+          <OrderProvider>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" />
@@ -28,8 +30,9 @@ export default function RootLayout() {
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>
-        </OrderProvider>
-      </CartProvider>
+          </OrderProvider>
+        </CartProvider>
+      </MenuProvider>
     </AuthProvider>
   );
 }

@@ -9,12 +9,14 @@ import {
   Alert,
   TextInput,
   useWindowDimensions,
+  Modal,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useOrders } from '@/src/contexts/OrderContext';
-import { foodItems, categories } from '@/src/data/menuData';
-import { Order } from '@/src/types';
+import { useMenu } from '@/src/contexts/MenuContext';
+import { Order, FoodItem } from '@/src/types';
 import { 
   BackIcon, 
   ChartIcon, 
@@ -27,7 +29,8 @@ import {
   EditIcon,
   TrashIcon,
   PlusIcon,
-  SettingsIcon
+  SettingsIcon,
+  CloseIcon
 } from '@/src/components/Icons';
 import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
 
@@ -53,6 +56,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const { orders, updateOrderStatus } = useOrders();
+  const { menuItems, categories, addMenuItem, updateMenuItem, deleteMenuItem } = useMenu();
   const { width } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'items' | 'settings'>('overview');
   const [restaurantInfo, setRestaurantInfo] = useState({
@@ -61,6 +65,16 @@ export default function AdminDashboard() {
     phone: '+27 11 123 4567',
     email: 'info@eatery.co.za',
     openingHours: '09:00 - 22:00',
+  });
+  
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
+  const [itemForm, setItemForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    image: '',
+    categoryId: '1',
   });
 
   const isTablet = width >= 768;
@@ -144,6 +158,86 @@ export default function AdminDashboard() {
 
   const handleSaveRestaurantInfo = () => {
     Alert.alert('Success', 'Restaurant information updated successfully!');
+  };
+
+  const handleOpenAddItem = () => {
+    setEditingItem(null);
+    setItemForm({
+      name: '',
+      description: '',
+      price: '',
+      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+      categoryId: '1',
+    });
+    setShowItemModal(true);
+  };
+
+  const handleOpenEditItem = (item: FoodItem) => {
+    setEditingItem(item);
+    setItemForm({
+      name: item.name,
+      description: item.description,
+      price: item.price.toString(),
+      image: item.image,
+      categoryId: item.categoryId,
+    });
+    setShowItemModal(true);
+  };
+
+  const handleSaveItem = async () => {
+    if (!itemForm.name.trim() || !itemForm.description.trim() || !itemForm.price.trim()) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    const price = parseFloat(itemForm.price);
+    if (isNaN(price) || price <= 0) {
+      Alert.alert('Error', 'Please enter a valid price');
+      return;
+    }
+
+    try {
+      if (editingItem) {
+        await updateMenuItem(editingItem.id, {
+          name: itemForm.name.trim(),
+          description: itemForm.description.trim(),
+          price,
+          image: itemForm.image.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+          categoryId: itemForm.categoryId,
+        });
+        Alert.alert('Success', 'Menu item updated successfully!');
+      } else {
+        await addMenuItem({
+          name: itemForm.name.trim(),
+          description: itemForm.description.trim(),
+          price,
+          image: itemForm.image.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+          categoryId: itemForm.categoryId,
+        });
+        Alert.alert('Success', 'Menu item added successfully!');
+      }
+      setShowItemModal(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save menu item');
+    }
+  };
+
+  const handleDeleteItem = (item: FoodItem) => {
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to delete "${item.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            await deleteMenuItem(item.id);
+            Alert.alert('Success', 'Menu item deleted successfully!');
+          }
+        },
+      ]
+    );
   };
 
   const tabs = [
@@ -385,7 +479,7 @@ export default function AdminDashboard() {
           <View style={styles.itemsList}>
             <TouchableOpacity 
               style={styles.addItemButton}
-              onPress={() => Alert.alert('Coming Soon', 'Add new menu item functionality will be available soon!')}
+              onPress={handleOpenAddItem}
             >
               <PlusIcon size={20} color="#fff" />
               <Text style={styles.addItemButtonText}>Add New Item</Text>
@@ -397,14 +491,15 @@ export default function AdminDashboard() {
                   <Text style={styles.categoryEmoji}>{category.icon}</Text>
                   <Text style={styles.categoryTitle}>{category.name}</Text>
                   <Text style={styles.categoryCount}>
-                    {foodItems.filter(i => i.categoryId === category.id).length} items
+                    {menuItems.filter(i => i.categoryId === category.id).length} items
                   </Text>
                 </View>
                 <View style={isDesktop && styles.menuItemsGrid}>
-                  {foodItems
+                  {menuItems
                     .filter((item) => item.categoryId === category.id)
                     .map((item) => (
                       <View key={item.id} style={[styles.menuItem, isDesktop && styles.menuItemDesktop]}>
+                        <Image source={{ uri: item.image }} style={styles.menuItemImage} />
                         <View style={styles.menuItemInfo}>
                           <Text style={styles.menuItemName}>{item.name}</Text>
                           <Text style={styles.menuItemDesc} numberOfLines={1}>
@@ -413,10 +508,10 @@ export default function AdminDashboard() {
                         </View>
                         <Text style={styles.menuItemPrice}>R{item.price.toFixed(2)}</Text>
                         <View style={styles.menuItemActions}>
-                          <TouchableOpacity style={styles.menuItemAction}>
+                          <TouchableOpacity style={styles.menuItemAction} onPress={() => handleOpenEditItem(item)}>
                             <EditIcon size={16} color="#3b82f6" />
                           </TouchableOpacity>
-                          <TouchableOpacity style={styles.menuItemAction}>
+                          <TouchableOpacity style={styles.menuItemAction} onPress={() => handleDeleteItem(item)}>
                             <TrashIcon size={16} color="#ef4444" />
                           </TouchableOpacity>
                         </View>
@@ -495,6 +590,115 @@ export default function AdminDashboard() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <Modal
+        visible={showItemModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowItemModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, isDesktop && styles.modalContentDesktop]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowItemModal(false)}>
+                <CloseIcon size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Item Name *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={itemForm.name}
+                  onChangeText={(text) => setItemForm({...itemForm, name: text})}
+                  placeholder="Enter item name"
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Description *</Text>
+                <TextInput
+                  style={[styles.formInput, { minHeight: 80 }]}
+                  value={itemForm.description}
+                  onChangeText={(text) => setItemForm({...itemForm, description: text})}
+                  placeholder="Enter item description"
+                  multiline
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Price (R) *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={itemForm.price}
+                  onChangeText={(text) => setItemForm({...itemForm, price: text})}
+                  placeholder="0.00"
+                  keyboardType="decimal-pad"
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Category *</Text>
+                <View style={styles.categoryPicker}>
+                  {categories.map((cat) => (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[
+                        styles.categoryOption,
+                        itemForm.categoryId === cat.id && styles.categoryOptionSelected
+                      ]}
+                      onPress={() => setItemForm({...itemForm, categoryId: cat.id})}
+                    >
+                      <Text style={styles.categoryOptionEmoji}>{cat.icon}</Text>
+                      <Text style={[
+                        styles.categoryOptionText,
+                        itemForm.categoryId === cat.id && styles.categoryOptionTextSelected
+                      ]}>{cat.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Image URL</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={itemForm.image}
+                  onChangeText={(text) => setItemForm({...itemForm, image: text})}
+                  placeholder="https://example.com/image.jpg"
+                />
+                {itemForm.image ? (
+                  <Image 
+                    source={{ uri: itemForm.image }} 
+                    style={styles.imagePreview}
+                  />
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setShowItemModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.saveItemButton}
+                onPress={handleSaveItem}
+              >
+                <Text style={styles.saveItemButtonText}>
+                  {editingItem ? 'Update Item' : 'Add Item'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -914,6 +1118,129 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  menuItemImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '90%',
+  },
+  modalContentDesktop: {
+    maxWidth: 600,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#11181C',
+  },
+  modalBody: {
+    padding: 20,
+    maxHeight: 400,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+    gap: 12,
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  formInput: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#11181C',
+  },
+  categoryPicker: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    gap: 4,
+  },
+  categoryOptionSelected: {
+    backgroundColor: '#3b82f6',
+  },
+  categoryOptionEmoji: {
+    fontSize: 16,
+  },
+  categoryOptionText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  categoryOptionTextSelected: {
+    color: '#fff',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 150,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+  },
+  cancelButtonText: {
+    color: '#374151',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveItemButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#3b82f6',
+  },
+  saveItemButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
