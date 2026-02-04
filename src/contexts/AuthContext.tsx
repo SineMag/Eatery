@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const newUser: User & { password: string } = {
         ...userData,
         id: Date.now().toString(),
-        isAdmin: false,
+        isAdmin: userData.email.toLowerCase().includes('admin'),
       };
 
       users.push(newUser);

@@ -16,7 +16,8 @@ import {
   ProfileIcon, 
   EditIcon, 
   CloseIcon,
-  CheckIcon 
+  CheckIcon,
+  SettingsIcon
 } from '@/src/components/Icons';
 
 export default function ProfileScreen() {
@@ -127,6 +128,19 @@ export default function ProfileScreen() {
           {user.name} {user.surname}
         </Text>
         <Text style={styles.userEmail}>{user.email}</Text>
+
+        {user.isAdmin && (
+          <TouchableOpacity 
+            style={styles.adminLink}
+            onPress={() => router.push('/admin')}
+          >
+            <View style={styles.adminLinkContent}>
+              <SettingsIcon size={20} color="#3b82f6" />
+              <Text style={styles.adminLinkText}>Staff Only (Admin Dashboard)</Text>
+            </View>
+            <Text style={styles.adminLinkArrow}>→</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
@@ -467,5 +481,31 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 16,
     fontWeight: '600',
+  },
+  adminLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#eff6ff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  adminLinkContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  adminLinkText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  adminLinkArrow: {
+    fontSize: 18,
+    color: '#3b82f6',
+    fontWeight: 'bold',
   },
 });
