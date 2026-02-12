@@ -40,7 +40,7 @@ export default function HomeScreen() {
             <Text style={[styles.greeting, isDesktop && styles.greetingDesktop]}>
               {user ? `Welcome back, ${user.name}!` : 'Welcome to Eatery'}
             </Text>
-            <Text style={styles.subGreeting}>What would you like to eat today?</Text>
+            <Text style={styles.subGreeting}>Get ready to feed those cravings!</Text>
           </View>
           {user?.isAdmin && (
             <TouchableOpacity

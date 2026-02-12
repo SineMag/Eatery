@@ -42,8 +42,11 @@ export default function ProfileScreen() {
         text: 'Sign Out',
         style: 'destructive',
         onPress: async () => {
+          console.log('User before logout:', user);
           await logout();
+          console.log('User after logout (should be null):', user); // This will still show the old user object due to closure
           router.replace('/');
+          console.log('Navigated to home page.');
         },
       },
     ]);
@@ -173,16 +176,12 @@ export default function ProfileScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
-            {isEditing ? (
-              <TextInput
-                style={styles.input}
-                value={formData.email}
-                onChangeText={(text) => setFormData({ ...formData, email: text })}
-                keyboardType="email-address"
-              />
-            ) : (
-              <Text style={styles.value}>{user.email}</Text>
-            )}
+            <TextInput
+              style={[styles.input, styles.disabledInput]}
+              value={user.email}
+              editable={false}
+              selectTextOnFocus={false}
+            />
           </View>
 
           <View style={styles.inputGroup}>
@@ -507,5 +506,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#3b82f6',
     fontWeight: 'bold',
+  },
+  disabledInput: {
+    backgroundColor: '#e0e0e0', // Greyed out background
+    color: '#757575', // Greyed out text
   },
 });

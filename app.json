@@ -4,7 +4,7 @@
     "slug": "eatery",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Eatery Logo.png",
+    "icon": "./assets/images/EateryLogo.png",
     "scheme": "eatery",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/Eatery Logo.png",
+        "foregroundImage": "./assets/images/EateryLogo.png",
         "backgroundColor": "#11181C"
       },
       "edgeToEdgeEnabled": true
@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Eatery Logo.png",
+          "image": "./assets/images/EateryLogo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#11181C"

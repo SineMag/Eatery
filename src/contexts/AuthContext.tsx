@@ -95,8 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    console.log('Logging out user...');
     setUser(null);
-    await AsyncStorage.removeItem(CURRENT_USER_KEY);
+    try {
+      await AsyncStorage.removeItem(CURRENT_USER_KEY);
+      console.log('CURRENT_USER_KEY removed from AsyncStorage.');
+    } catch (error) {
+      console.error('Error removing CURRENT_USER_KEY from AsyncStorage:', error);
+    }
+    console.log('User state set to null.');
   };
 
   const updateProfile = async (userData: Partial<User>): Promise<{ success: boolean; error?: string }> => {
