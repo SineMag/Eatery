@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CartItem, FoodItem, CartItemCustomization } from '../types';
+import { useMenu } from './MenuContext';
 
 interface CartContextType {
   items: CartItem[];
@@ -19,6 +20,7 @@ const CART_KEY = '@eatery_cart';
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const { menuItems } = useMenu();
 
   useEffect(() => {
     loadCart();
@@ -27,6 +29,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     saveCart();
   }, [items]);
+
+  useEffect(() => {
+    // Keep cart item pricing in sync when admins update menu data.
+    setItems((prev) =>
+      prev.map((item) => {
+        const latest = menuItems.find((menuItem) => menuItem.id === item.foodItem.id);
+        if (!latest) return item;
+
+        const totalPrice = calculateItemTotal(latest, item.quantity, item.customization);
+        return { ...item, foodItem: latest, totalPrice };
+      })
+    );
+  }, [menuItems]);
 
   const loadCart = async () => {
     try {

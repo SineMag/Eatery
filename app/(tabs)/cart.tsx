@@ -8,11 +8,12 @@ import {
   Image,
   SafeAreaView,
   Alert,
-  useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '@/src/contexts/CartContext';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { 
   EmptyCartIcon, 
   TrashIcon, 
@@ -26,10 +27,7 @@ export default function CartScreen() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCart();
   const { user } = useAuth();
-  const { width } = useWindowDimensions();
-  
-  const isTablet = width >= 768;
-  const isDesktop = width >= 1024;
+  const { isDesktop } = useResponsive();
 
   const handleCheckout = () => {
     if (!user) {
@@ -48,6 +46,12 @@ export default function CartScreen() {
   };
 
   const handleClearCart = () => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm('Clear all cart items?') : true;
+      if (confirmed) clearCart();
+      return;
+    }
+
     Alert.alert(
       'Clear Cart',
       'Are you sure you want to remove all items from your cart?',
@@ -59,6 +63,13 @@ export default function CartScreen() {
   };
 
   const handleRemoveItem = (itemId: string, itemName: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed =
+        typeof window !== 'undefined' ? window.confirm(`Remove ${itemName} from cart?`) : true;
+      if (confirmed) removeItem(itemId);
+      return;
+    }
+
     Alert.alert(
       'Remove Item',
       `Are you sure you want to remove ${itemName} from your cart?`,

@@ -8,6 +8,7 @@ import {
   TextInput,
   SafeAreaView,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -24,6 +25,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     surname: user?.surname || '',
@@ -35,18 +37,35 @@ export default function ProfileScreen() {
     cardCVV: user?.cardCVV || '',
   });
 
+  const performLogout = async () => {
+    if (isSigningOut) return;
+
+    try {
+      setIsSigningOut(true);
+      await logout();
+      setIsEditing(false);
+      router.dismissAll();
+      router.replace('/');
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   const handleLogout = () => {
+    if (isSigningOut) return;
+
+    if (Platform.OS === 'web') {
+      void performLogout();
+      return;
+    }
+
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign Out',
         style: 'destructive',
-        onPress: async () => {
-          console.log('User before logout:', user);
-          await logout();
-          console.log('User after logout (should be null):', user); // This will still show the old user object due to closure
-          router.replace('/');
-          console.log('Navigated to home page.');
+        onPress: () => {
+          void performLogout();
         },
       },
     ]);
@@ -132,14 +151,14 @@ export default function ProfileScreen() {
         </Text>
         <Text style={styles.userEmail}>{user.email}</Text>
 
-        {user.isAdmin && (
+        {(user.isAdmin || user.isStaff) && (
           <TouchableOpacity 
             style={styles.adminLink}
             onPress={() => router.push('/admin')}
           >
             <View style={styles.adminLinkContent}>
               <SettingsIcon size={20} color="#3b82f6" />
-              <Text style={styles.adminLinkText}>Staff Only (Admin Dashboard)</Text>
+              <Text style={styles.adminLinkText}>Staff Dashboard</Text>
             </View>
             <Text style={styles.adminLinkArrow}>→</Text>
           </TouchableOpacity>
@@ -272,8 +291,14 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Sign Out</Text>
+        <TouchableOpacity
+          style={[styles.logoutButton, isSigningOut && styles.logoutButtonDisabled]}
+          onPress={handleLogout}
+          disabled={isSigningOut}
+        >
+          <Text style={styles.logoutButtonText}>
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+          </Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -475,6 +500,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ef4444',
+  },
+  logoutButtonDisabled: {
+    opacity: 0.7,
   },
   logoutButtonText: {
     color: '#ef4444',

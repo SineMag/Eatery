@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -17,7 +18,7 @@ import { CloseIcon } from '@/src/components/Icons';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, user, isLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -35,6 +36,17 @@ export default function RegisterScreen() {
   const updateField = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  useEffect(() => {
+    if (isLoading || !user) return;
+
+    if (user.isAdmin || user.isStaff) {
+      router.replace('/admin');
+      return;
+    }
+
+    router.replace('/');
+  }, [isLoading, router, user]);
 
   const validateForm = () => {
     if (!formData.name.trim()) return 'Name is required';
@@ -72,12 +84,22 @@ export default function RegisterScreen() {
 
     if (result.success) {
       Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => router.replace('/') },
+        {
+          text: 'OK',
+          onPress: () => {
+            router.dismissAll();
+            router.replace('/');
+          },
+        },
       ]);
     } else {
       Alert.alert('Registration Failed', result.error || 'Please try again');
     }
   };
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -97,6 +119,11 @@ export default function RegisterScreen() {
           </TouchableOpacity>
 
           <View style={styles.header}>
+            <Image
+              source={require('@/assets/images/EateryLogo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Join Eatery and start ordering!</Text>
           </View>
@@ -274,8 +301,14 @@ const styles = StyleSheet.create({
     marginLeft: -8,
   },
   header: {
+    alignItems: 'center',
     marginTop: 16,
     marginBottom: 24,
+  },
+  logo: {
+    width: 64,
+    height: 64,
+    marginBottom: 12,
   },
   title: {
     fontSize: 28,

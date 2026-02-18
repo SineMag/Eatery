@@ -7,11 +7,11 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
-  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
-import { categories, foodItems } from '@/src/data/menuData';
+import { useMenu } from '@/src/contexts/MenuContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { 
   PlusIcon, 
   AdminIcon,
@@ -21,16 +21,14 @@ import {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { width } = useWindowDimensions();
-
-  const isTablet = width >= 768;
-  const isDesktop = width >= 1024;
+  const { categories, menuItems } = useMenu();
+  const { isTablet, isDesktop } = useResponsive();
   
   const itemCardWidth = isDesktop ? '23%' : isTablet ? '31%' : '48%';
   const categoryCardWidth = isDesktop ? 110 : isTablet ? 100 : 85;
   const popularCardWidth = isDesktop ? 180 : isTablet ? 160 : 140;
 
-  const featuredItems = foodItems.slice(0, isDesktop ? 8 : isTablet ? 6 : 4);
+  const featuredItems = menuItems.slice(0, isDesktop ? 8 : isTablet ? 6 : 4);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -42,15 +40,6 @@ export default function HomeScreen() {
             </Text>
             <Text style={styles.subGreeting}>Get ready to feed those cravings!</Text>
           </View>
-          {user?.isAdmin && (
-            <TouchableOpacity
-              style={styles.adminButton}
-              onPress={() => router.push('/admin')}
-            >
-              <AdminIcon size={18} color="#fff" />
-              <Text style={styles.adminButtonText}>Admin</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         <View style={styles.section}>
@@ -127,7 +116,7 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, isDesktop && styles.sectionTitleDesktop]}>Popular This Week</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.popularRow}>
-              {foodItems.slice(4, 10).map((item) => (
+              {menuItems.slice(4, 10).map((item) => (
                 <TouchableOpacity
                   key={item.id}
                   style={[styles.popularCard, { width: popularCardWidth }]}
@@ -153,6 +142,13 @@ export default function HomeScreen() {
             <Text style={styles.ctaText}>
               Sign in or create an account to start ordering delicious food!
             </Text>
+            <TouchableOpacity
+              style={styles.ctaStaffButton}
+              onPress={() => router.push('/auth/staff-entry')}
+            >
+              <AdminIcon size={16} color="#fff" />
+              <Text style={styles.ctaStaffButtonText}>Staff Entry</Text>
+            </TouchableOpacity>
             <View style={styles.ctaButtons}>
               <TouchableOpacity
                 style={styles.ctaButtonPrimary}
@@ -204,20 +200,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     marginTop: 4,
-  },
-  adminButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#11181C',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  adminButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
   },
   section: {
     marginBottom: 24,
@@ -422,6 +404,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9ca3af',
     marginBottom: 16,
+  },
+  ctaStaffButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#9ca3af',
+    borderRadius: 8,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  ctaStaffButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   ctaButtons: {
     flexDirection: 'row',

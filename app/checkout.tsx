@@ -9,12 +9,12 @@ import {
   SafeAreaView,
   Alert,
   Modal,
-  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '@/src/contexts/CartContext';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useOrders } from '@/src/contexts/OrderContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { 
   BackIcon, 
   CardIcon, 
@@ -36,9 +36,7 @@ export default function CheckoutScreen() {
   const { items, getTotal, clearCart } = useCart();
   const { user, updateProfile } = useAuth();
   const { addOrder } = useOrders();
-  const { width } = useWindowDimensions();
-
-  const isDesktop = width >= 1024;
+  const { isDesktop } = useResponsive();
 
   const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');

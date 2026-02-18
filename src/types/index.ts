@@ -9,6 +9,8 @@ export interface User {
   cardExpiry?: string;
   cardCVV?: string;
   isAdmin?: boolean;
+  isStaff?: boolean;
+  staffId?: string;
 }
 
 export interface FoodCategory {
@@ -80,7 +82,7 @@ export interface Order {
   userId: string;
   items: CartItem[];
   total: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled' | 'deleted';
   deliveryAddress: string;
   paymentMethod: string;
   createdAt: string;

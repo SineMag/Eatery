@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,28 +8,35 @@ import {
   SafeAreaView,
   Alert,
   TextInput,
-  useWindowDimensions,
+  Animated,
+  Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Redirect, useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useOrders } from '@/src/contexts/OrderContext';
-import { foodItems, categories } from '@/src/data/menuData';
-import { Order } from '@/src/types';
+import { useMenu } from '@/src/contexts/MenuContext';
+import { Order, FoodItem } from '@/src/types';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { 
   BackIcon, 
   ChartIcon, 
   OrdersIcon, 
   MenuIcon,
-  DollarIcon,
-  TrendingUpIcon,
-  PackageIcon,
-  UsersIcon,
   EditIcon,
   TrashIcon,
-  PlusIcon,
   SettingsIcon
 } from '@/src/components/Icons';
-import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
+import { PieChart } from 'react-native-chart-kit';
+
+const RESTAURANT_INFO_KEY = '@eatery_restaurant_info';
+const defaultRestaurantInfo = {
+  name: 'Eatery Restaurant',
+  address: '123 Food Street, Johannesburg',
+  phone: '+27 11 123 4567',
+  email: 'info@eatery.co.za',
+  openingHours: '09:00 - 22:00',
+};
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   pending: { bg: '#fef3c7', text: '#d97706' },
@@ -38,6 +45,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
   ready: { bg: '#d1fae5', text: '#059669' },
   delivered: { bg: '#e5e7eb', text: '#374151' },
   cancelled: { bg: '#fee2e2', text: '#dc2626' },
+  deleted: { bg: '#f3f4f6', text: '#6b7280' },
 };
 
 const chartConfig = {
@@ -51,22 +59,28 @@ const chartConfig = {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user } = useAuth();
-  const { orders, updateOrderStatus } = useOrders();
-  const { width } = useWindowDimensions();
+  const { user, createStaffAccount, isLoading, logout } = useAuth();
+  const { orders, updateOrderStatus, deleteOrder } = useOrders();
+  const { menuItems, categories, addMenuItem, updateMenuItem, deleteMenuItem } = useMenu();
+  const { width, isTablet, isDesktop } = useResponsive();
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'items' | 'settings'>('overview');
-  const [restaurantInfo, setRestaurantInfo] = useState({
-    name: 'Eatery Restaurant',
-    address: '123 Food Street, Johannesburg',
-    phone: '+27 11 123 4567',
-    email: 'info@eatery.co.za',
-    openingHours: '09:00 - 22:00',
+  const [staffName, setStaffName] = useState('');
+  const [staffSurname, setStaffSurname] = useState('');
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSavingItem, setIsSavingItem] = useState(false);
+  const [itemFormMode, setItemFormMode] = useState<'create' | 'edit'>('create');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    description: '',
+    price: '',
+    image: '',
+    categoryId: categories[0]?.id || '',
   });
+  const [restaurantInfo, setRestaurantInfo] = useState(defaultRestaurantInfo);
 
-  const isTablet = width >= 768;
-  const isDesktop = width >= 1024;
   const chartWidth = Math.min(width - 64, isDesktop ? 600 : isTablet ? 500 : 400);
-
+  const liveDotOpacity = useRef(new Animated.Value(1)).current;
   const stats = useMemo(() => {
     const totalRevenue = orders
       .filter((o) => o.status !== 'cancelled')
@@ -98,30 +112,61 @@ export default function AdminDashboard() {
       }, {} as Record<string, { name: string; quantity: number; revenue: number }>)
     ).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      return date.toISOString().split('T')[0];
-    });
-
-    const dailyRevenue = last7Days.map(date => {
-      const dayOrders = orders.filter(o => 
-        o.createdAt.split('T')[0] === date && o.status !== 'cancelled'
-      );
-      return dayOrders.reduce((sum, o) => sum + o.total, 0);
-    });
-
     return { 
       totalRevenue, 
       todayOrders: todayOrders.length, 
       totalOrders: orders.length, 
       statusCounts, 
       topItems,
-      dailyRevenue,
-      last7Days,
       avgOrderValue: orders.length > 0 ? totalRevenue / orders.filter(o => o.status !== 'cancelled').length : 0
     };
   }, [orders]);
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(liveDotOpacity, {
+          toValue: 0.35,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(liveDotOpacity, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulse.start();
+    return () => pulse.stop();
+  }, [liveDotOpacity]);
+
+  useEffect(() => {
+    const loadRestaurantInfo = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(RESTAURANT_INFO_KEY);
+        if (!stored) return;
+        setRestaurantInfo(JSON.parse(stored));
+      } catch {
+        // Keep defaults when storage is unavailable/corrupt.
+      }
+    };
+
+    void loadRestaurantInfo();
+  }, []);
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!user) {
+    return <Redirect href="/auth/staff-entry" />;
+  }
+
+  if (!user.isAdmin && !user.isStaff) {
+    return <Redirect href="/" />;
+  }
 
   const pieData = Object.entries(stats.statusCounts).map(([status, count], index) => ({
     name: status,
@@ -131,19 +176,200 @@ export default function AdminDashboard() {
     legendFontSize: 12,
   }));
 
+  const topItemsPieData = stats.topItems.map((item, index) => ({
+    name: item.name,
+    value: item.revenue,
+    color: ['#11181C', '#2563eb', '#10b981', '#d97706', '#db2777'][index] || '#6b7280',
+    legendFontColor: '#374151',
+    legendFontSize: 12,
+  }));
+
+  const confirmAction = (message: string, onConfirm: () => void) => {
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm(message) : true;
+      if (confirmed) onConfirm();
+      return;
+    }
+
+    Alert.alert('Please Confirm', message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', onPress: onConfirm },
+    ]);
+  };
+
   const handleStatusUpdate = (orderId: string, newStatus: Order['status']) => {
-    Alert.alert(
-      'Update Status',
-      `Change order status to ${newStatus}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Update', onPress: () => updateOrderStatus(orderId, newStatus) },
-      ]
-    );
+    confirmAction(`Change order status to ${newStatus}?`, () => updateOrderStatus(orderId, newStatus));
   };
 
   const handleSaveRestaurantInfo = () => {
-    Alert.alert('Success', 'Restaurant information updated successfully!');
+    const saveRestaurantInfo = async () => {
+      try {
+        await AsyncStorage.setItem(RESTAURANT_INFO_KEY, JSON.stringify(restaurantInfo));
+        Alert.alert('Success', 'Restaurant information updated successfully!');
+      } catch {
+        Alert.alert('Error', 'Unable to save restaurant information.');
+      }
+    };
+
+    void saveRestaurantInfo();
+  };
+
+  const handleResetRestaurantInfo = () => {
+    confirmAction('Restore default restaurant information?', () => {
+      const resetInfo = async () => {
+        setRestaurantInfo(defaultRestaurantInfo);
+        try {
+          await AsyncStorage.removeItem(RESTAURANT_INFO_KEY);
+          Alert.alert('Reset', 'Defaults restored.');
+        } catch {
+          Alert.alert('Error', 'Unable to reset restaurant information.');
+        }
+      };
+
+      void resetInfo();
+    });
+  };
+
+  const performSignOut = async () => {
+    if (isSigningOut) return;
+
+    try {
+      setIsSigningOut(true);
+      await logout();
+      router.dismissAll();
+      router.replace('/');
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    if (isSigningOut) return;
+
+    if (Platform.OS === 'web') {
+      void performSignOut();
+      return;
+    }
+
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: () => void performSignOut() },
+    ]);
+  };
+
+  const handleCreateStaffAccount = async () => {
+    if (!staffName.trim() || !staffSurname.trim()) {
+      Alert.alert('Missing Info', 'Enter staff name and surname');
+      return;
+    }
+
+    const result = await createStaffAccount(staffName, staffSurname);
+    if (!result.success || !result.credentials) {
+      Alert.alert('Creation Failed', result.error || 'Could not create staff account');
+      return;
+    }
+
+    setStaffName('');
+    setStaffSurname('');
+    Alert.alert(
+      'Staff Account Created',
+      `Email: ${result.credentials.email}\nStaff ID: ${result.credentials.staffId}\nPassword: ${result.credentials.password}`
+    );
+  };
+
+  const updateNewItemField = (field: keyof typeof newItem, value: string) => {
+    setNewItem((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetNewItemForm = () => {
+    setNewItem({
+      name: '',
+      description: '',
+      price: '',
+      image: '',
+      categoryId: categories[0]?.id || '',
+    });
+    setItemFormMode('create');
+    setEditingItemId(null);
+  };
+
+  const openCreateItemForm = () => {
+    resetNewItemForm();
+  };
+
+  const openEditItemForm = (item: FoodItem) => {
+    setItemFormMode('edit');
+    setEditingItemId(item.id);
+    setNewItem({
+      name: item.name,
+      description: item.description,
+      price: item.price.toString(),
+      image: item.image,
+      categoryId: item.categoryId,
+    });
+  };
+
+  const handleDeleteItem = (item: FoodItem) => {
+    confirmAction(`Remove "${item.name}" from the menu?`, () => {
+      const removeItem = async () => {
+        await deleteMenuItem(item.id);
+        if (editingItemId === item.id) {
+          resetNewItemForm();
+        }
+        Alert.alert('Deleted', 'Menu item removed.');
+      };
+
+      void removeItem();
+    });
+  };
+
+  const handleDeleteOrder = (orderId: string) => {
+    confirmAction('Mark this order as deleted?', () => deleteOrder(orderId));
+  };
+
+  const handleSaveMenuItem = async () => {
+    const parsedPrice = Number(newItem.price);
+    if (!newItem.name.trim() || !newItem.description.trim() || !newItem.image.trim() || !newItem.categoryId) {
+      Alert.alert('Missing Fields', 'Fill in name, description, image URL, and category.');
+      return;
+    }
+
+    if (Number.isNaN(parsedPrice) || parsedPrice <= 0) {
+      Alert.alert('Invalid Price', 'Enter a valid price greater than 0.');
+      return;
+    }
+
+    setIsSavingItem(true);
+    try {
+      if (itemFormMode === 'edit' && editingItemId) {
+        await updateMenuItem(editingItemId, {
+          name: newItem.name.trim(),
+          description: newItem.description.trim(),
+          price: parsedPrice,
+          image: newItem.image.trim(),
+          categoryId: newItem.categoryId,
+        });
+        Alert.alert('Updated', 'Menu changes are now visible to customers.');
+      } else {
+        await addMenuItem({
+          name: newItem.name.trim(),
+          description: newItem.description.trim(),
+          price: parsedPrice,
+          image: newItem.image.trim(),
+          categoryId: newItem.categoryId,
+          sides: [],
+          drinks: [],
+          extras: [],
+          ingredients: [],
+        });
+        Alert.alert('Saved', 'New menu item is now visible to customers.');
+      }
+      resetNewItemForm();
+    } catch {
+      Alert.alert('Error', 'Unable to save menu changes.');
+    } finally {
+      setIsSavingItem(false);
+    }
   };
 
   const tabs = [
@@ -160,29 +386,19 @@ export default function AdminDashboard() {
           <BackIcon size={24} color="#11181C" />
         </TouchableOpacity>
         <Text style={[styles.title, isDesktop && styles.titleDesktop]}>Admin Dashboard</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <View style={[styles.tabs, isDesktop && styles.tabsDesktop]}>
-        {tabs.map((tab) => {
-          const IconComponent = tab.icon;
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={[
-                styles.tab, 
-                activeTab === tab.id && styles.tabActive,
-                isDesktop && styles.tabDesktop
-              ]}
-              onPress={() => setActiveTab(tab.id as any)}
-            >
-              <IconComponent size={18} color={activeTab === tab.id ? '#fff' : '#6b7280'} />
-              <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        <View style={styles.headerActions}>
+          <View style={styles.liveBadge}>
+            <Animated.View style={[styles.liveDot, { opacity: liveDotOpacity }]} />
+            <Text style={styles.liveText}>LIVE</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.signOutButton, isSigningOut && styles.signOutButtonDisabled]}
+            onPress={handleSignOut}
+            disabled={isSigningOut}
+          >
+            <Text style={styles.signOutButtonText}>{isSigningOut ? 'Signing Out...' : 'Sign Out'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
@@ -190,32 +406,20 @@ export default function AdminDashboard() {
           <View style={isDesktop && styles.overviewDesktop}>
             <View style={[styles.statsGrid, isDesktop && styles.statsGridDesktop]}>
               <View style={[styles.statCard, { backgroundColor: '#f0fdf4' }, isDesktop && styles.statCardDesktop]}>
-                <View style={styles.statHeader}>
-                  <DollarIcon size={24} color="#10b981" />
-                </View>
                 <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>
                   R{stats.totalRevenue.toFixed(0)}
                 </Text>
                 <Text style={styles.statLabel}>Total Revenue</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: '#eff6ff' }, isDesktop && styles.statCardDesktop]}>
-                <View style={styles.statHeader}>
-                  <PackageIcon size={24} color="#3b82f6" />
-                </View>
                 <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>{stats.totalOrders}</Text>
                 <Text style={styles.statLabel}>Total Orders</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: '#fef3c7' }, isDesktop && styles.statCardDesktop]}>
-                <View style={styles.statHeader}>
-                  <TrendingUpIcon size={24} color="#d97706" />
-                </View>
                 <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>{stats.todayOrders}</Text>
                 <Text style={styles.statLabel}>Today's Orders</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: '#fce7f3' }, isDesktop && styles.statCardDesktop]}>
-                <View style={styles.statHeader}>
-                  <UsersIcon size={24} color="#db2777" />
-                </View>
                 <Text style={[styles.statValue, isDesktop && styles.statValueDesktop]}>
                   R{stats.avgOrderValue.toFixed(0)}
                 </Text>
@@ -224,25 +428,6 @@ export default function AdminDashboard() {
             </View>
 
             <View style={[styles.chartsRow, isDesktop && styles.chartsRowDesktop]}>
-              <View style={[styles.chartSection, isDesktop && styles.chartSectionDesktop]}>
-                <Text style={styles.chartTitle}>Revenue (Last 7 Days)</Text>
-                <BarChart
-                  data={{
-                    labels: stats.last7Days.map(d => d.slice(-2)),
-                    datasets: [{ data: stats.dailyRevenue.length > 0 ? stats.dailyRevenue : [0] }],
-                  }}
-                  width={chartWidth}
-                  height={200}
-                  yAxisLabel="R"
-                  yAxisSuffix=""
-                  chartConfig={{
-                    ...chartConfig,
-                    color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-                  }}
-                  style={styles.chart}
-                />
-              </View>
-
               {pieData.length > 0 && (
                 <View style={[styles.chartSection, isDesktop && styles.chartSectionDesktop]}>
                   <Text style={styles.chartTitle}>Order Status Distribution</Text>
@@ -252,6 +437,21 @@ export default function AdminDashboard() {
                     height={200}
                     chartConfig={chartConfig}
                     accessor="count"
+                    backgroundColor="transparent"
+                    paddingLeft="15"
+                  />
+                </View>
+              )}
+
+              {topItemsPieData.length > 0 && (
+                <View style={[styles.chartSection, isDesktop && styles.chartSectionDesktop]}>
+                  <Text style={styles.chartTitle}>Top Item Revenue Share</Text>
+                  <PieChart
+                    data={topItemsPieData}
+                    width={chartWidth}
+                    height={200}
+                    chartConfig={chartConfig}
+                    accessor="value"
                     backgroundColor="transparent"
                     paddingLeft="15"
                   />
@@ -282,6 +482,13 @@ export default function AdminDashboard() {
 
         {activeTab === 'orders' && (
           <View style={[styles.ordersList, isDesktop && styles.ordersListDesktop]}>
+            <TouchableOpacity
+              style={styles.viewAllOrdersButton}
+              onPress={() => router.push('/admin-orders')}
+            >
+              <Text style={styles.viewAllOrdersButtonText}>View All Orders</Text>
+            </TouchableOpacity>
+
             {orders.length === 0 ? (
               <View style={styles.emptyState}>
                 <OrdersIcon size={48} color="#d1d5db" />
@@ -331,7 +538,7 @@ export default function AdminDashboard() {
                         <Text style={styles.orderTotal}>R{order.total.toFixed(2)}</Text>
                       </View>
                       
-                      {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                      {order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'deleted' && (
                         <View style={styles.statusButtons}>
                           {order.status === 'pending' && (
                             <TouchableOpacity
@@ -373,6 +580,14 @@ export default function AdminDashboard() {
                           </TouchableOpacity>
                         </View>
                       )}
+
+                      <TouchableOpacity
+                        style={styles.deleteOrderButton}
+                        onPress={() => handleDeleteOrder(order.id)}
+                      >
+                        <TrashIcon size={14} color="#ef4444" />
+                        <Text style={styles.deleteOrderButtonText}>Delete Order</Text>
+                      </TouchableOpacity>
                     </View>
                   );
                 })}
@@ -383,13 +598,102 @@ export default function AdminDashboard() {
 
         {activeTab === 'items' && (
           <View style={styles.itemsList}>
-            <TouchableOpacity 
-              style={styles.addItemButton}
-              onPress={() => Alert.alert('Coming Soon', 'Add new menu item functionality will be available soon!')}
-            >
-              <PlusIcon size={20} color="#fff" />
-              <Text style={styles.addItemButtonText}>Add New Item</Text>
-            </TouchableOpacity>
+            <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
+              <View style={styles.menuEditorHeader}>
+                <Text style={styles.sectionTitle}>
+                  {itemFormMode === 'edit' ? 'Edit Menu Item' : 'Add New Menu Item'}
+                </Text>
+                {itemFormMode === 'edit' && (
+                  <TouchableOpacity style={styles.menuEditorCancelButton} onPress={openCreateItemForm}>
+                    <Text style={styles.menuEditorCancelText}>Cancel Edit</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newItem.name}
+                  onChangeText={(text) => updateNewItemField('name', text)}
+                  placeholder="Item name"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Description</Text>
+                <TextInput
+                  style={[styles.input, styles.multilineInput]}
+                  value={newItem.description}
+                  onChangeText={(text) => updateNewItemField('description', text)}
+                  placeholder="Item description"
+                  multiline
+                />
+              </View>
+
+              <View style={isDesktop ? styles.inputRow : undefined}>
+                <View style={[styles.inputGroup, isDesktop && { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Price (R)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={newItem.price}
+                    onChangeText={(text) => updateNewItemField('price', text)}
+                    keyboardType="decimal-pad"
+                    placeholder="99.99"
+                  />
+                </View>
+                <View style={[styles.inputGroup, isDesktop && { flex: 1, marginLeft: 16 }]}>
+                  <Text style={styles.inputLabel}>Image URL</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={newItem.image}
+                    onChangeText={(text) => updateNewItemField('image', text)}
+                    placeholder="https://..."
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Category</Text>
+                <View style={styles.categorySelector}>
+                  {categories.map((category) => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={[
+                        styles.categoryChip,
+                        newItem.categoryId === category.id && styles.categoryChipActive,
+                      ]}
+                      onPress={() => updateNewItemField('categoryId', category.id)}
+                    >
+                      <Text style={styles.categoryChipEmoji}>{category.icon}</Text>
+                      <Text
+                        style={[
+                          styles.categoryChipText,
+                          newItem.categoryId === category.id && styles.categoryChipTextActive,
+                        ]}
+                      >
+                        {category.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveButton, isSavingItem && styles.signOutButtonDisabled]}
+                onPress={handleSaveMenuItem}
+                disabled={isSavingItem}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isSavingItem
+                    ? 'Saving...'
+                    : itemFormMode === 'edit'
+                    ? 'Update Item'
+                    : 'Add Item'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {categories.map((category) => (
               <View key={category.id} style={styles.categorySection}>
@@ -397,11 +701,11 @@ export default function AdminDashboard() {
                   <Text style={styles.categoryEmoji}>{category.icon}</Text>
                   <Text style={styles.categoryTitle}>{category.name}</Text>
                   <Text style={styles.categoryCount}>
-                    {foodItems.filter(i => i.categoryId === category.id).length} items
+                    {menuItems.filter((i) => i.categoryId === category.id).length} items
                   </Text>
                 </View>
                 <View style={isDesktop && styles.menuItemsGrid}>
-                  {foodItems
+                  {menuItems
                     .filter((item) => item.categoryId === category.id)
                     .map((item) => (
                       <View key={item.id} style={[styles.menuItem, isDesktop && styles.menuItemDesktop]}>
@@ -413,10 +717,16 @@ export default function AdminDashboard() {
                         </View>
                         <Text style={styles.menuItemPrice}>R{item.price.toFixed(2)}</Text>
                         <View style={styles.menuItemActions}>
-                          <TouchableOpacity style={styles.menuItemAction}>
+                          <TouchableOpacity
+                            style={styles.menuItemAction}
+                            onPress={() => openEditItemForm(item)}
+                          >
                             <EditIcon size={16} color="#3b82f6" />
                           </TouchableOpacity>
-                          <TouchableOpacity style={styles.menuItemAction}>
+                          <TouchableOpacity
+                            style={styles.menuItemAction}
+                            onPress={() => handleDeleteItem(item)}
+                          >
                             <TrashIcon size={16} color="#ef4444" />
                           </TouchableOpacity>
                         </View>
@@ -489,12 +799,74 @@ export default function AdminDashboard() {
               >
                 <Text style={styles.saveButtonText}>Save Changes</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={handleResetRestaurantInfo}
+              >
+                <Text style={styles.resetButtonText}>Reset to Defaults</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
+              <Text style={styles.sectionTitle}>Create Staff Account</Text>
+
+              <View style={isDesktop ? styles.inputRow : undefined}>
+                <View style={[styles.inputGroup, isDesktop && { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={staffName}
+                    onChangeText={setStaffName}
+                    placeholder="John"
+                  />
+                </View>
+                <View style={[styles.inputGroup, isDesktop && { flex: 1, marginLeft: 16 }]}>
+                  <Text style={styles.inputLabel}>Surname</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={staffSurname}
+                    onChangeText={setStaffSurname}
+                    placeholder="Doe"
+                  />
+                </View>
+              </View>
+
+              <Text style={styles.emptyText}>Generated format: name.surname@company.com</Text>
+
+              <TouchableOpacity style={styles.saveButton} onPress={handleCreateStaffAccount}>
+                <Text style={styles.saveButtonText}>Generate Staff Credentials</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
+
+      <View style={[styles.tabsBottom, isDesktop && styles.tabsBottomDesktop]}>
+        <View style={[styles.tabs, isDesktop && styles.tabsDesktop]}>
+          {tabs.map((tab) => {
+            const IconComponent = tab.icon;
+            return (
+              <TouchableOpacity
+                key={tab.id}
+                style={[
+                  styles.tab, 
+                  activeTab === tab.id && styles.tabActive,
+                  isDesktop && styles.tabDesktop
+                ]}
+                onPress={() => setActiveTab(tab.id as any)}
+              >
+                <IconComponent size={18} color={activeTab === tab.id ? '#fff' : '#6b7280'} />
+                <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -519,6 +891,50 @@ const styles = StyleSheet.create({
   headerButton: {
     padding: 8,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ecfdf5',
+    borderWidth: 1,
+    borderColor: '#86efac',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16a34a',
+  },
+  liveText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#166534',
+    letterSpacing: 0.4,
+  },
+  signOutButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  signOutButtonDisabled: {
+    opacity: 0.7,
+  },
+  signOutButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ef4444',
+  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -534,8 +950,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 8,
   },
+  tabsBottom: {
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+    backgroundColor: '#fff',
+  },
+  tabsBottomDesktop: {
+    paddingHorizontal: 24,
+  },
   tabsDesktop: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 16,
     gap: 16,
   },
   tab: {
@@ -587,9 +1011,6 @@ const styles = StyleSheet.create({
   statCardDesktop: {
     width: '23%',
     padding: 24,
-  },
-  statHeader: {
-    marginBottom: 12,
   },
   statValue: {
     fontSize: 24,
@@ -690,6 +1111,18 @@ const styles = StyleSheet.create({
   },
   ordersListDesktop: {
     paddingHorizontal: 24,
+  },
+  viewAllOrdersButton: {
+    backgroundColor: '#11181C',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  viewAllOrdersButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   ordersGrid: {
     flexDirection: 'row',
@@ -797,20 +1230,76 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  itemsList: {},
-  addItemButton: {
+  deleteOrderButton: {
+    marginTop: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#11181C',
-    padding: 14,
-    borderRadius: 12,
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  deleteOrderButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ef4444',
+  },
+  itemsList: {},
+  menuEditorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  addItemButtonText: {
+  menuEditorCancelButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#fef2f2',
+  },
+  menuEditorCancelText: {
+    fontSize: 13,
+    color: '#ef4444',
+    fontWeight: '600',
+  },
+  multilineInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  categorySelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  categoryChipActive: {
+    backgroundColor: '#11181C',
+    borderColor: '#11181C',
+  },
+  categoryChipEmoji: {
+    fontSize: 14,
+  },
+  categoryChipText: {
+    fontSize: 13,
+    color: '#11181C',
+    fontWeight: '500',
+  },
+  categoryChipTextActive: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
   },
   categorySection: {
@@ -912,6 +1401,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
+  },
+  resetButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  resetButtonText: {
+    color: '#ef4444',
+    fontSize: 16,
+    fontWeight: '600',
   },
   saveButtonText: {
     color: '#fff',

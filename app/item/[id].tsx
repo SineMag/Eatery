@@ -10,8 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { getFoodItemById, getCategoryById } from '@/src/data/menuData';
 import { useCart } from '@/src/contexts/CartContext';
+import { useMenu } from '@/src/contexts/MenuContext';
 import { SideOption, DrinkOption, ExtraOption, CartItemCustomization } from '@/src/types';
 import { 
   BackIcon, 
@@ -25,9 +25,10 @@ export default function ItemDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { addItem } = useCart();
+  const { getMenuItemById, categories } = useMenu();
 
-  const foodItem = getFoodItemById(id as string);
-  const category = foodItem ? getCategoryById(foodItem.categoryId) : null;
+  const foodItem = getMenuItemById(id as string);
+  const category = foodItem ? categories.find((entry) => entry.id === foodItem.categoryId) : null;
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSides, setSelectedSides] = useState<SideOption[]>([]);
@@ -138,12 +139,13 @@ export default function ItemDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.floatingBackButton} onPress={() => router.back()}>
+        <BackIcon size={24} color="#fff" />
+      </TouchableOpacity>
+
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: foodItem.image }} style={styles.image} />
-          <TouchableOpacity style={styles.backButtonOverlay} onPress={() => router.back()}>
-            <BackIcon size={24} color="#fff" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
@@ -356,7 +358,7 @@ const styles = StyleSheet.create({
     height: 300,
     backgroundColor: '#f3f4f6',
   },
-  backButtonOverlay: {
+  floatingBackButton: {
     position: 'absolute',
     top: 16,
     left: 16,
@@ -366,6 +368,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   content: {
     padding: 20,

@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
+import { Redirect } from 'expo-router';
 import React from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useCart } from '@/src/contexts/CartContext';
+import { useAuth } from '@/src/contexts/AuthContext';
 import { 
   HomeIcon, 
   MenuIcon, 
@@ -48,7 +50,16 @@ function TabIcon({ name, color, focused, badge }: { name: string; color: string;
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { getItemCount } = useCart();
+  const { user, isLoading } = useAuth();
   const cartCount = getItemCount();
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (user?.isAdmin || user?.isStaff) {
+    return <Redirect href="/admin" />;
+  }
 
   return (
     <Tabs

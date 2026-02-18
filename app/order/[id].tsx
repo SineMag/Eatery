@@ -18,6 +18,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
   ready: { bg: '#d1fae5', text: '#059669' },
   delivered: { bg: '#e5e7eb', text: '#374151' },
   cancelled: { bg: '#fee2e2', text: '#dc2626' },
+  deleted: { bg: '#f3f4f6', text: '#6b7280' },
 };
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivered'];
@@ -73,7 +74,7 @@ export default function OrderDetailScreen() {
         </View>
         <Text style={styles.orderDate}>{orderDate}</Text>
 
-        {order.status !== 'cancelled' && order.status !== 'delivered' && (
+        {order.status !== 'cancelled' && order.status !== 'delivered' && order.status !== 'deleted' && (
           <View style={styles.progressSection}>
             <Text style={styles.sectionTitle}>Order Progress</Text>
             <View style={styles.progressContainer}>

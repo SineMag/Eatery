@@ -7,30 +7,28 @@ import {
   StyleSheet,
   Image,
   SafeAreaView,
-  useWindowDimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { categories, foodItems, getCategoryById } from '@/src/data/menuData';
+import { useMenu } from '@/src/contexts/MenuContext';
 import { ChevronRightIcon } from '@/src/components/Icons';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 export default function MenuScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { width } = useWindowDimensions();
+  const { categories, menuItems } = useMenu();
   const [selectedCategory, setSelectedCategory] = useState<string>(
     (params.category as string) || ''
   );
-
-  const isTablet = width >= 768;
-  const isDesktop = width >= 1024;
+  const { isTablet, isDesktop } = useResponsive();
 
   const filteredItems = useMemo(() => {
-    if (!selectedCategory) return foodItems;
-    return foodItems.filter((item) => item.categoryId === selectedCategory);
-  }, [selectedCategory]);
+    if (!selectedCategory) return menuItems;
+    return menuItems.filter((item) => item.categoryId === selectedCategory);
+  }, [menuItems, selectedCategory]);
 
   const selectedCategoryData = selectedCategory
-    ? getCategoryById(selectedCategory)
+    ? categories.find((category) => category.id === selectedCategory)
     : null;
 
   return (
@@ -94,7 +92,7 @@ export default function MenuScreen() {
           isDesktop && styles.itemsContainerDesktop
         ]}>
           {filteredItems.map((item) => {
-            const category = getCategoryById(item.categoryId);
+            const category = categories.find((entry) => entry.id === item.categoryId);
             return (
               <TouchableOpacity
                 key={item.id}

@@ -8,6 +8,7 @@ import {
   Image,
   SafeAreaView,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCart } from '@/src/contexts/CartContext';
@@ -121,9 +122,12 @@ export default function EditCartItemScreen() {
       addedIngredients,
     };
     updateCustomization(cartItem.id, customization);
-    Alert.alert('Updated', 'Your customizations have been saved!', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    if (Platform.OS === 'web') {
+      router.back();
+      return;
+    }
+    Alert.alert('Updated', 'Your customizations have been saved!');
+    router.back();
   };
 
   return (

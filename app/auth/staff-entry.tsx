@@ -16,11 +16,14 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { CloseIcon } from '@/src/components/Icons';
 
-export default function LoginScreen() {
+const COMPANY_DOMAIN = 'company.com';
+
+export default function StaffEntryScreen() {
   const router = useRouter();
-  const { login, user, isLoading } = useAuth();
+  const { loginStaff, user, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [staffId, setStaffId] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,22 +37,23 @@ export default function LoginScreen() {
     router.replace('/');
   }, [isLoading, router, user]);
 
-  const handleLogin = async () => {
+  const handleStaffLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please enter both email and password');
+      Alert.alert('Error', 'Enter email and password');
       return;
     }
 
     setLoading(true);
-    const result = await login(email.trim(), password);
+    const result = await loginStaff(email.trim(), password, staffId.trim());
     setLoading(false);
 
-    if (result.success) {
-      router.dismissAll();
-      router.replace('/');
-    } else {
-      Alert.alert('Login Failed', result.error || 'Invalid credentials');
+    if (!result.success) {
+      Alert.alert('Staff Sign In Failed', result.error || 'Invalid credentials');
+      return;
     }
+
+    router.dismissAll();
+    router.replace('/admin');
   };
 
   if (isLoading) {
@@ -62,39 +66,30 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => router.back()}
-          >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <CloseIcon size={28} color="#6b7280" />
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Image
-              source={require('@/assets/images/EateryLogo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Image source={require('@/assets/images/EateryLogo.png')} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.title}>Staff Entry</Text>
+            <Text style={styles.subtitle}>Use your company staff credentials</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.hintCard}>
-              <Text style={styles.hintTitle}>Demo User Credentials</Text>
-              <Text style={styles.hintText}>Email: s@m.com</Text>
-              <Text style={styles.hintText}>Password: 123456</Text>
+              <Text style={styles.hintTitle}>Default Admin</Text>
+              <Text style={styles.hintText}>Email: admin@{COMPANY_DOMAIN}</Text>
+              <Text style={styles.hintText}>Password: Admin456</Text>
+              <Text style={styles.hintFootnote}>Staff ID is optional for admin login.</Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>Company Email</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your email"
+                placeholder={`name.surname@${COMPANY_DOMAIN}`}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -107,37 +102,31 @@ export default function LoginScreen() {
               <Text style={styles.label}>Password</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder="Enter password"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
               />
             </View>
 
-            <TouchableOpacity
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.loginButtonText}>
-                {loading ? 'Signing In...' : 'Sign In'}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Staff ID</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Example: ID59025K"
+                value={staffId}
+                onChangeText={(value) => setStaffId(value.toUpperCase())}
+                autoCapitalize="characters"
+              />
+              <Text style={styles.helper}>Required for non-admin staff accounts.</Text>
             </View>
 
             <TouchableOpacity
-              style={styles.registerButton}
-              onPress={() => {
-                router.back();
-                router.push('/auth/register');
-              }}
+              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              onPress={handleStaffLogin}
+              disabled={loading}
             >
-              <Text style={styles.registerButtonText}>Create New Account</Text>
+              <Text style={styles.loginButtonText}>{loading ? 'Signing In...' : 'Enter Staff Dashboard'}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -165,26 +154,26 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 40,
+    marginTop: 20,
+    marginBottom: 28,
   },
   logo: {
     width: 72,
     height: 72,
+    marginBottom: 12,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#11181C',
-    marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#6b7280',
   },
   form: {
-    gap: 20,
+    gap: 16,
   },
   hintCard: {
     backgroundColor: '#f9fafb',
@@ -204,6 +193,11 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginBottom: 2,
   },
+  hintFootnote: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 6,
+  },
   inputGroup: {},
   label: {
     fontSize: 14,
@@ -221,6 +215,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#11181C',
   },
+  helper: {
+    marginTop: 6,
+    color: '#6b7280',
+    fontSize: 12,
+  },
   loginButton: {
     backgroundColor: '#11181C',
     paddingVertical: 16,
@@ -233,34 +232,6 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e5e5e5',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#6b7280',
-    fontSize: 14,
-  },
-  registerButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#11181C',
-  },
-  registerButtonText: {
-    color: '#11181C',
     fontSize: 16,
     fontWeight: '600',
   },

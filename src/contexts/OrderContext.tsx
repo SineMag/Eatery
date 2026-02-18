@@ -7,6 +7,7 @@ interface OrderContextType {
   addOrder: (order: Omit<Order, 'id' | 'createdAt'>) => Promise<Order>;
   getOrdersByUser: (userId: string) => Order[];
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  deleteOrder: (orderId: string) => void;
   getAllOrders: () => Order[];
 }
 
@@ -64,12 +65,18 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     ));
   };
 
+  const deleteOrder = (orderId: string) => {
+    setOrders((prev) =>
+      prev.map((order) => (order.id === orderId ? { ...order, status: 'deleted' } : order))
+    );
+  };
+
   const getAllOrders = (): Order[] => {
     return orders;
   };
 
   return (
-    <OrderContext.Provider value={{ orders, addOrder, getOrdersByUser, updateOrderStatus, getAllOrders }}>
+    <OrderContext.Provider value={{ orders, addOrder, getOrdersByUser, updateOrderStatus, deleteOrder, getAllOrders }}>
       {children}
     </OrderContext.Provider>
   );
