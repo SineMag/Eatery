@@ -21,7 +21,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.ico"
+      "favicon": "./assets/images/EateryLogo.png"
     },
     "plugins": [
       "expo-router",
