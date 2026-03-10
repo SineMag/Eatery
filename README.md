@@ -1,3 +1,5 @@
+<img src="https://socialify.git.ci/SineMag/Eatery/image?language=1&owner=1&name=1&stargazers=1&theme=Light" alt="Eatery" width="640" height="320" />
+
 # Eatery - Restaurant Ordering Application
 
 A comprehensive React Native restaurant ordering application built with Expo.
@@ -59,6 +61,19 @@ View the application design: [Figma Design Link](https://www.figma.com/design/YO
 ```
 
 ## Getting Started
+
+## Prerequisites
+
+- Node 18+ and npm
+- Expo CLI (`npm i -g expo` optional; `npx expo` works without global install)
+- Android emulator or iOS simulator, or a real device with Expo Go
+
+## Clone
+
+```bash
+git clone https://github.com/SineMag/Eatery.git
+cd Eatery
+```
 
 1. Install dependencies:
    ```bash
