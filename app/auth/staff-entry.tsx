@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   hintCard: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: 'blue',
     borderWidth: 1,
     borderColor: '#e5e5e5',
     borderRadius: 12,
