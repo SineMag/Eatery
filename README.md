@@ -18,11 +18,10 @@ Admin456
 
 A comprehensive React Native restaurant ordering application built with Expo.
 
-## Design
+## Live link hosted on render.com
 
-View the application design: [Figma Design Link](https://www.figma.com/design/YOUR_DESIGN_ID)
+View the application live: [Eatery](https://eatery-h2x2.onrender.com)
 
-> **Note**: Replace the link above with your actual Figma/design file link
 
 ## Features
 
