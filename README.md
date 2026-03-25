@@ -2,6 +2,20 @@
 
 # Eatery - Restaurant Ordering Application
 
+## fake credentials for logging in to the admin page
+### email
+```bash
+admin@company.com
+
+```
+
+### password
+```bash
+Admin456
+```
+
+### id is optional
+
 A comprehensive React Native restaurant ordering application built with Expo.
 
 ## Design
