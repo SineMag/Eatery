@@ -36,7 +36,7 @@ export default function HomeScreen() {
         <View style={[styles.header, isDesktop && styles.headerDesktop]}>
           <View>
             <Text style={[styles.greeting, isDesktop && styles.greetingDesktop]}>
-              {user ? `Welcome back, ${user.name}!` : 'Welcome to Eatery'}
+              {user ? `Welcome, ${user.name}!` : 'Welcome to Eatery'}
             </Text>
             <Text style={styles.subGreeting}>Get ready to feed those cravings!</Text>
           </View>
